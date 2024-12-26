@@ -13,6 +13,7 @@ class BattleshipGame:
         }
         self.placed_ships = []
         self.ready = False
+        self.opponent_ready = False
         self.my_turn = False
         self.game_started = False
         self.remaining_ships = sum(length for length in self.ships.values())
@@ -78,3 +79,8 @@ class BattleshipGame:
             
         # The actual result will come from the opponent
         return {'valid': True, 'x': x, 'y': y} 
+
+    def set_opponent_ready(self):
+        """Mark opponent as ready."""
+        self.opponent_ready = True
+        return self.ready and self.opponent_ready  # Return True if both players are ready 
