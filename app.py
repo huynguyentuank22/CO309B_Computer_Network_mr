@@ -152,5 +152,22 @@ def check_connection():
         'status': status
     })
 
+@app.route('/disconnect', methods=['POST'])
+def disconnect():
+    username = session.get('username')
+    peer = peer_instances.get(username)
+    if peer:
+        # Send disconnect message to opponent before closing
+        if peer.is_connected:
+            try:
+                peer.send_message({
+                    'type': 'DISCONNECT',
+                    'message': 'Opponent left the game'
+                })
+            except:
+                pass
+        peer.handle_disconnect("You left the game")
+    return jsonify({'success': True})
+
 if __name__ == '__main__':
     app.run(debug=True) 

@@ -36,8 +36,26 @@
     <script>
         class BattleshipGame {
             constructor() {
-                // ... existing constructor code ...
+                this.boardSize = 10;
+                this.currentShip = null;
+                this.orientation = 'horizontal';
+                this.isPlacingShip = false;
+                this.setupBoards();
+                this.setupControls();
+                this.setupPreview();
                 this.startConnectionCheck();
+                this.setupExitHandler();
+            }
+
+            setupExitHandler() {
+                // Handle page unload (close/refresh/navigate away)
+                window.addEventListener('beforeunload', () => {
+                    // Send disconnect request to server
+                    fetch('/disconnect', { 
+                        method: 'POST',
+                        keepalive: true  // Ensures request is sent even if page is unloading
+                    });
+                });
             }
 
             startConnectionCheck() {

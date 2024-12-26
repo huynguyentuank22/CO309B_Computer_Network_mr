@@ -368,6 +368,10 @@ class PeerNetwork:
                     print(f"Game starting with {message.get('username')}")
                     # Set opponent username
                     self.opponent_username = message.get('username')
+                elif message.get('type') == 'DISCONNECT':
+                    # Handle graceful disconnect from opponent
+                    self.handle_disconnect(message.get('message', 'Opponent disconnected'))
+                    break
                 else:
                     print(f"Received message: {message}")
             except Exception as e:
