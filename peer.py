@@ -328,7 +328,7 @@ class PeerNetwork:
                     
                     # Send connection confirmation
                     self.send_message({
-                        'type': 'GAME_START',
+                        'type': 'CONNECTION_ACCEPTED',
                         'username': self.username
                     })
                     
