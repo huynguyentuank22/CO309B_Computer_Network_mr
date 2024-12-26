@@ -1,0 +1,66 @@
+.game-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.boards {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+}
+
+.board-container {
+    text-align: center;
+}
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(10, 40px);
+    grid-template-rows: repeat(10, 40px);
+    gap: 1px;
+    background-color: #ccc;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.cell {
+    width: 40px;
+    height: 40px;
+    background-color: #fff;
+    border: 1px solid #999;
+    cursor: pointer;
+}
+
+.ship {
+    background-color: #666;
+}
+
+.preview-valid {
+    background-color: rgba(76, 175, 80, 0.5);  /* Semi-transparent green */
+}
+
+.preview-invalid {
+    background-color: rgba(255, 0, 0, 0.5);    /* Semi-transparent red */
+}
+
+.hit {
+    background-color: #ff4444;
+}
+
+.miss {
+    background-color: #44aaff;
+}
+
+.controls {
+    text-align: center;
+}
+
+.ships button {
+    margin: 5px;
+    padding: 5px 10px;
+}
+
+#rotate {
+    margin-top: 10px;
+} 

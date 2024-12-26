@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Battleship Game</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="game-container">
+        <div class="boards">
+            <div class="board-container">
+                <h2>Your Board</h2>
+                <div id="my-board" class="board"></div>
+            </div>
+            <div class="board-container">
+                <h2>Opponent's Board</h2>
+                <div id="opponent-board" class="board"></div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div id="ship-placement" class="ship-placement">
+                <h3>Place your ships</h3>
+                <div class="ships">
+                    <button data-ship="carrier" data-length="5">Carrier (5)</button>
+                    <button data-ship="battleship" data-length="4">Battleship (4)</button>
+                    <button data-ship="cruiser" data-length="3">Cruiser (3)</button>
+                    <button data-ship="submarine" data-length="3">Submarine (3)</button>
+                    <button data-ship="destroyer" data-length="2">Destroyer (2)</button>
+                </div>
+                <button id="rotate">Rotate</button>
+            </div>
+            <div id="game-status"></div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/game.js') }}"></script>
+</body>
+</html> 

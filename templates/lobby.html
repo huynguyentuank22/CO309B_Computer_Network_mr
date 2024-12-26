@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Battleship - Lobby</title>
+    <style>
+        .lobby-container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        
+        .player-info {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+        
+        .game-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .opponent-requests {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+        
+        .request-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .request-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .search-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .accept-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .reject-btn {
+            background-color: #f44336;
+            color: white;
+        }
+        
+        .status-message {
+            text-align: center;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        
+        .searching {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="lobby-container">
+        <div class="player-info">
+            <h2>Welcome, {{ username }}!</h2>
+        </div>
+        
+        <div class="game-controls">
+            <button id="searchBtn" class="search-btn">Search for Opponent</button>
+        </div>
+        
+        <div id="statusMessage" class="status-message" style="display: none;"></div>
+        
+        <div class="opponent-requests">
+            <h3>Connection Requests</h3>
+            <div id="requestsList">
+                <!-- Requests will be added here dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isSearching = false;
+        
+        document.getElementById('searchBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('searchBtn');
+            const statusMsg = document.getElementById('statusMessage');
+            
+            if (!isSearching) {
+                // Start searching
+                isSearching = true;
+                btn.textContent = 'Cancel Search';
+                statusMsg.textContent = 'Searching for opponents...';
+                statusMsg.classList.add('searching');
+                statusMsg.style.display = 'block';
+                
+                // Send broadcast request
+                await fetch('/broadcast_request', { method: 'POST' });
+            } else {
+                // Cancel searching
+                isSearching = false;
+                btn.textContent = 'Search for Opponent';
+                statusMsg.style.display = 'none';
+                
+                // Cancel broadcast
+                await fetch('/cancel_search', { method: 'POST' });
+            }
+        });
+
+        // Poll for connection requests
+        function pollRequests() {
+            fetch('/get_requests')
+                .then(response => response.json())
+                .then(requests => {
+                    const requestsList = document.getElementById('requestsList');
+                    requestsList.innerHTML = '';
+                    
+                    requests.forEach(request => {
+                        const requestItem = document.createElement('div');
+                        requestItem.className = 'request-item';
+                        requestItem.innerHTML = `
+                            <span>${request.username} wants to play!</span>
+                            <div class="request-buttons">
+                                <button class="accept-btn" onclick="handleRequest('${request.username}', true)">Accept</button>
+                                <button class="reject-btn" onclick="handleRequest('${request.username}', false)">Reject</button>
+                            </div>
+                        `;
+                        requestsList.appendChild(requestItem);
+                    });
+                });
+        }
+
+        async function handleRequest(username, accept) {
+            const response = await fetch('/handle_request', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    accept: accept
+                })
+            });
+            
+            const result = await response.json();
+            if (result.success && accept) {
+                window.location.href = '/game';
+            }
+        }
+
+        // Poll every 2 seconds
+        setInterval(pollRequests, 2000);
+    </script>
+</body>
+</html> 

@@ -18,6 +18,9 @@ class PeerNetwork:
         self.tcp_port = None
         self.peer_connection = None
         self.is_connected = False
+        self.pending_requests = []
+        self.is_broadcasting = False
+        self.broadcast_thread = None
 
     def get_local_ip(self):
         """Get local IP address."""
@@ -109,34 +112,63 @@ class PeerNetwork:
                     self.send_message(message)
 
     def broadcast_connect_request(self):
-        """Broadcast connection request to peers."""
-        if not self.tcp_socket:
-            if not self.initialize_tcp_socket():
-                return
+        """Start broadcasting connection requests."""
+        self.is_broadcasting = True
+        self.broadcast_thread = threading.Thread(target=self._broadcast_loop, daemon=True)
+        self.broadcast_thread.start()
 
-        print("Broadcasting connection request...")
-        request_msg = pickle.dumps({
-            'type': 'CONNECT_REQUEST',
-            'username': self.username,
-            'local_ip': self.local_ip,
-            'tcp_port': self.tcp_port
-        })
+    def _broadcast_loop(self):
+        """Continuously broadcast connection requests."""
+        while self.is_broadcasting:
+            request_msg = pickle.dumps({
+                'type': 'CONNECT_REQUEST',
+                'username': self.username,
+                'local_ip': self.local_ip,
+                'tcp_port': self.tcp_port
+            })
+            self.udp_socket.sendto(request_msg, ('<broadcast>', self.UDP_PORT))
+            time.sleep(2)  # Broadcast every 2 seconds
 
-        self.udp_socket.sendto(request_msg, ('<broadcast>', self.UDP_PORT))
+    def stop_broadcasting(self):
+        """Stop broadcasting connection requests."""
+        self.is_broadcasting = False
+        if self.broadcast_thread:
+            self.broadcast_thread.join()
+
+    def get_pending_requests(self):
+        """Get list of pending connection requests."""
+        return self.pending_requests
+
+    def accept_connection(self, username):
+        """Accept a connection request from a specific user."""
+        for request in self.pending_requests:
+            if request['username'] == username:
+                success = self.connect_to_peer(request['ip'], request['tcp_port'])
+                if success:
+                    self.pending_requests.remove(request)
+                return success
+        return False
+
+    def reject_connection(self, username):
+        """Reject a connection request from a specific user."""
+        self.pending_requests = [r for r in r['username'] != username]
 
     def listen_for_udp(self):
-        """Listen for incoming UDP messages."""
+        """Modified UDP listener to handle connection requests."""
         while True:
             try:
                 data, addr = self.udp_socket.recvfrom(1024)
                 message = pickle.loads(data)
 
                 if message['type'] == 'CONNECT_REQUEST' and addr[0] != self.local_ip:
-                    print(f"\nReceived connect request from {message['username']} at {addr[0]}:{message['tcp_port']}")
-                    choice = input(f"Accept connection from {message['username']}? (y/n): ")
-
-                    if choice.lower() == 'y':
-                        self.connect_to_peer(addr[0], message['tcp_port'])
+                    # Add to pending requests if not already there
+                    request = {
+                        'username': message['username'],
+                        'ip': addr[0],
+                        'tcp_port': message['tcp_port']
+                    }
+                    if request not in self.pending_requests:
+                        self.pending_requests.append(request)
 
             except Exception as e:
                 continue
