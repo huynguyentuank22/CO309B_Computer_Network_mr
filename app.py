@@ -197,6 +197,13 @@ def player_ready():
     game = game_instances.get(username)
     peer = peer_instances.get(username)
     
+    print(f"\n=== Player Ready Request ===")
+    print(f"Username: {username}")
+    print(f"Game exists: {game is not None}")
+    print(f"Peer exists: {peer is not None}")
+    print(f"Peer connected: {peer.is_connected if peer else False}")
+    print(f"Opponent username: {peer.opponent_username if peer else None}")
+    
     if not game or not peer:
         print(f"Game or peer not found for {username}")
         return jsonify({'success': False}), 404
@@ -218,10 +225,14 @@ def player_ready():
     
     # Check if both players are ready
     opponent_game = game_instances.get(peer.opponent_username)
+    print(f"Opponent game exists: {opponent_game is not None}")
+    print(f"Opponent ready: {opponent_game.ready if opponent_game else False}")
+    
     both_ready = False
     if opponent_game:
         if opponent_game.ready:
             both_ready = True
+            print("Both players are ready!")
             # Start the game
             game.game_started = True
             opponent_game.game_started = True
@@ -230,6 +241,7 @@ def player_ready():
             import random
             game.my_turn = random.choice([True, False])
             opponent_game.my_turn = not game.my_turn
+            print(f"First player: {username if game.my_turn else peer.opponent_username}")
             
             # Notify opponent of turn order
             peer.send_message({
@@ -237,6 +249,7 @@ def player_ready():
                 'first_player': username if game.my_turn else peer.opponent_username
             })
     
+    print(f"Returning: success=True, both_ready={both_ready}")
     return jsonify({
         'success': True,
         'both_ready': both_ready

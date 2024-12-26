@@ -184,11 +184,13 @@ class BattleshipGame {
 
     async handleReady() {
         console.log('Handling ready state');
+        alert('Checking ready state...');
         if (!this.isPlacementComplete()) {
             alert('Please place all your ships first!');
             return;
         }
 
+        alert('Sending ready status to server...');
         const response = await fetch('/player_ready', {
             method: 'POST',
             headers: {
@@ -200,6 +202,7 @@ class BattleshipGame {
         console.log('Player ready result:', result);
 
         if (result.success) {
+            alert('Successfully marked as ready');
             this.isReady = true;
             document.getElementById('ready-btn').disabled = true;
             document.getElementById('rotate').disabled = true;
@@ -207,20 +210,23 @@ class BattleshipGame {
             document.getElementById('phase-text').textContent = 'Waiting for opponent...';
             
             if (result.both_ready) {
+                alert('Both players are ready! Starting countdown...');
                 this.startCountdown();
             }
         } else {
-            alert(result.message || 'Failed to ready up');
+            alert(`Failed to ready up: ${result.message || 'Unknown error'}`);
         }
     }
 
     isPlacementComplete() {
         const placedShips = document.querySelectorAll('.ships button[disabled]');
-        console.log('Placed ships count:', placedShips.length);
-        return placedShips.length === 5;  // All 5 ships should be placed
+        const count = placedShips.length;
+        alert(`Checking ship placement: ${count}/5 ships placed`);
+        return count === 5;  // All 5 ships should be placed
     }
 
     startCountdown() {
+        alert('Starting countdown...');
         console.log('Starting countdown');
         const countdownDiv = document.getElementById('countdown');
         countdownDiv.style.display = 'block';
@@ -234,6 +240,7 @@ class BattleshipGame {
             } else {
                 clearInterval(countInterval);
                 countdownDiv.style.display = 'none';
+                alert('Countdown complete, starting game!');
                 this.startGame();
             }
         }, 1000);
@@ -321,13 +328,17 @@ class BattleshipGame {
     }
 
     handleGameStatus(status) {
+        console.log('Received game status:', status);
         if (status.type === 'PLAYER_READY') {
             // Opponent is ready
+            alert(`Opponent ${status.username} is ready!`);
             document.getElementById('phase-text').textContent = 'Opponent is ready!';
             if (this.isReady) {
+                alert('Both players ready, starting countdown...');
                 this.startCountdown();
             }
         } else if (status.type === 'GAME_START') {
+            alert(`Game starting! ${status.first_player ? 'You go first!' : 'Opponent goes first!'}`);
             this.myTurn = status.first_player === true;
             this.startGame();
         }
