@@ -12,6 +12,10 @@ class BattleshipGame:
             'destroyer': 2
         }
         self.placed_ships = []
+        self.ready = False
+        self.my_turn = False
+        self.game_started = False
+        self.remaining_ships = sum(length for length in self.ships.values())
         
     def place_ship(self, ship, x, y, orientation):
         if ship not in self.ships or ship in self.placed_ships:
@@ -42,6 +46,29 @@ class BattleshipGame:
         self.placed_ships.append(ship)
         return True
         
+    def is_placement_complete(self):
+        """Check if all ships have been placed."""
+        return len(self.placed_ships) == len(self.ships)
+
+    def receive_attack(self, x, y):
+        """Process an attack from the opponent."""
+        if x < 0 or x >= self.board_size or y < 0 or y >= self.board_size:
+            return {'hit': False, 'message': 'Invalid coordinates'}
+
+        cell = self.my_board[y][x]
+        if cell:  # Hit
+            self.remaining_ships -= 1
+            self.my_board[y][x] = 'hit'
+            return {
+                'hit': True,
+                'message': f'Hit {cell}!',
+                'ship': cell,
+                'game_over': self.remaining_ships == 0
+            }
+        else:  # Miss
+            self.my_board[y][x] = 'miss'
+            return {'hit': False, 'message': 'Miss!'}
+
     def fire(self, x, y):
         if x < 0 or x >= self.board_size or y < 0 or y >= self.board_size:
             return {'hit': False, 'message': 'Invalid coordinates'}
@@ -49,7 +76,5 @@ class BattleshipGame:
         if self.opponent_board[y][x] is not None:
             return {'hit': False, 'message': 'Already fired at this position'}
             
-        # In a real game, we would check the opponent's board
-        # For now, just mark as miss
-        self.opponent_board[y][x] = 'miss'
-        return {'hit': False, 'message': 'Miss!'} 
+        # The actual result will come from the opponent
+        return {'valid': True, 'x': x, 'y': y} 

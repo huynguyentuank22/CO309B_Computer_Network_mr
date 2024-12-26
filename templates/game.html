@@ -6,14 +6,21 @@
 </head>
 <body>
     <div class="game-container">
+        <div id="game-phase" class="game-phase">
+            <h2>Phase: <span id="phase-text">Placing Ships</span></h2>
+            <div id="countdown" style="display: none;"></div>
+        </div>
+
         <div class="boards">
             <div class="board-container">
                 <h2>Your Board</h2>
                 <div id="my-board" class="board"></div>
+                <button id="ready-btn" style="display: none;">Ready</button>
             </div>
             <div class="board-container">
                 <h2>Opponent's Board</h2>
                 <div id="opponent-board" class="board"></div>
+                <div id="turn-indicator"></div>
             </div>
         </div>
         
