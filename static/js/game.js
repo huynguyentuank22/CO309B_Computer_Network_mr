@@ -290,6 +290,39 @@ class BattleshipGame {
         alert(message);
         window.location.href = '/lobby';
     }
+
+    startConnectionCheck() {
+        setInterval(() => {
+            fetch('/check_connection')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.connected) {
+                        // Show disconnect message if provided
+                        const message = data.status || 'Connection lost';
+                        alert(message);
+                        // Navigate back to lobby
+                        window.location.href = '/lobby';
+                    } else if (data.game_status) {
+                        // Handle game status updates
+                        this.handleGameStatus(data.game_status);
+                    }
+                })
+                .catch(error => console.error('Connection check error:', error));
+        }, 2000);
+    }
+
+    handleGameStatus(status) {
+        if (status.type === 'PLAYER_READY') {
+            // Opponent is ready
+            document.getElementById('phase-text').textContent = 'Opponent is ready!';
+            if (this.isReady) {
+                this.startCountdown();
+            }
+        } else if (status.type === 'GAME_START') {
+            this.myTurn = status.first_player === true;
+            this.startGame();
+        }
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {

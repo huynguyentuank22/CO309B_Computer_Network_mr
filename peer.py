@@ -367,8 +367,18 @@ class PeerNetwork:
                     self.opponent_username = message['username']
                 elif message.get('type') == 'PLAYER_READY':
                     print(f"Player {message['username']} is ready")
+                    # Store the ready status
+                    self.game_status = {
+                        'type': 'PLAYER_READY',
+                        'username': message['username']
+                    }
                 elif message.get('type') == 'GAME_START':
                     print(f"Game starting, first player: {message['first_player']}")
+                    # Store the game start status
+                    self.game_status = {
+                        'type': 'GAME_START',
+                        'first_player': message['first_player'] == self.username
+                    }
                 elif message.get('type') == 'FIRE':
                     print(f"Received fire at {message['x']}, {message['y']}")
                 elif message.get('type') == 'DISCONNECT':

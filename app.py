@@ -140,11 +140,29 @@ def handle_request():
 def check_connection():
     username = session.get('username')
     peer = peer_instances.get(username)
+    game = game_instances.get(username)
+    
     if peer and peer.is_connected:
+        game_status = None
+        if game and game.ready:
+            # Check if opponent is ready
+            opponent_game = game_instances.get(peer.opponent_username)
+            if opponent_game and opponent_game.ready:
+                game_status = {
+                    'type': 'PLAYER_READY'
+                }
+            if game.game_started:
+                game_status = {
+                    'type': 'GAME_START',
+                    'first_player': game.my_turn
+                }
+                
         return jsonify({
             'connected': True,
-            'opponent': getattr(peer, 'opponent_username', None)
+            'opponent': getattr(peer, 'opponent_username', None),
+            'game_status': game_status
         })
+    
     # Get disconnect reason if any
     status = peer.get_game_status() if peer else None
     return jsonify({
