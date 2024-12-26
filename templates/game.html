@@ -33,5 +33,36 @@
         </div>
     </div>
     <script src="{{ url_for('static', filename='js/game.js') }}"></script>
+    <script>
+        class BattleshipGame {
+            constructor() {
+                // ... existing constructor code ...
+                this.startConnectionCheck();
+            }
+
+            startConnectionCheck() {
+                setInterval(() => {
+                    fetch('/check_connection')
+                        .then(response => response.json())
+                        .then(data => {
+                            if (!data.connected) {
+                                // Show disconnect message if provided
+                                const message = data.status || 'Connection lost';
+                                alert(message);
+                                // Navigate back to lobby
+                                window.location.href = '/lobby';
+                            }
+                        })
+                        .catch(error => console.error('Connection check error:', error));
+                }, 2000);
+            }
+
+            // ... rest of the class code ...
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new BattleshipGame();
+        });
+    </script>
 </body>
 </html> 

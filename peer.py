@@ -20,6 +20,8 @@ class PeerNetwork:
         self.is_broadcasting = False
         self.broadcast_thread = None
         self.request_lock = threading.Lock()
+        self.opponent_username = None
+        self.game_status = None  # To store game status messages
 
     def get_local_ip(self):
         """Get local IP address."""
@@ -276,13 +278,18 @@ class PeerNetwork:
                 r for r in self.pending_requests 
                 if current_time - r['timestamp'] < 30
             ]
+            # Filter out self requests
+            filtered_requests = [
+                r for r in self.pending_requests 
+                if r['username'] != self.username
+            ]
             print(f"Current pending requests: {self.pending_requests}")
             # Return only necessary information for the frontend
             return [{
                 'username': r['username'],
                 'timestamp': r['timestamp'],
                 'strength': r['strength']
-            } for r in self.pending_requests]
+            } for r in filtered_requests]
 
     def accept_connection(self, username):
         """Accept a connection request from a specific user."""
@@ -337,6 +344,8 @@ class PeerNetwork:
             try:
                 data = self.peer_connection.recv(1024)
                 if not data:
+                    # Connection closed by peer
+                    self.handle_disconnect("Opponent disconnected")
                     break
                 message = pickle.loads(data)
                 # Handle different message types
@@ -351,10 +360,21 @@ class PeerNetwork:
                     print(f"Received message: {message}")
             except Exception as e:
                 print(f"Message handling error: {e}")
+                self.handle_disconnect("Connection error occurred")
                 break
-        
+
+    def handle_disconnect(self, reason="Connection lost"):
+        """Handle disconnection with cleanup."""
         self.is_connected = False
-        print("Peer connection lost")
+        self.game_status = reason
+        if self.peer_connection:
+            try:
+                self.peer_connection.close()
+            except:
+                pass
+        self.peer_connection = None
+        self.opponent_username = None
+        print(f"Peer connection lost: {reason}")
 
     def send_message(self, message):
         """Send message to connected peer."""
@@ -366,6 +386,12 @@ class PeerNetwork:
             except Exception as e:
                 print(f"Message send error: {e}")
                 self.is_connected = False
+
+    def get_game_status(self):
+        """Get current game status."""
+        status = self.game_status
+        self.game_status = None  # Clear after reading
+        return status
 
 
 def main():

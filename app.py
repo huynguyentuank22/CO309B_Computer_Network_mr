@@ -145,7 +145,12 @@ def check_connection():
             'connected': True,
             'opponent': getattr(peer, 'opponent_username', None)
         })
-    return jsonify({'connected': False})
+    # Get disconnect reason if any
+    status = peer.get_game_status() if peer else None
+    return jsonify({
+        'connected': False,
+        'status': status
+    })
 
 if __name__ == '__main__':
     app.run(debug=True) 
