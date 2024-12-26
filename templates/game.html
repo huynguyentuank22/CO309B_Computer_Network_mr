@@ -48,7 +48,13 @@
                     <button data-ship="destroyer" data-length="2">Destroyer (2)</button>
                 </div>
                 <button id="rotate">Rotate</button>
-                <button id="ready-btn" class="ready-button" style="display: none; margin-top: 20px;">Done</button>
+                <button 
+                    id="ready-btn" 
+                    class="ready-button" 
+                    style="display: none; margin-top: 20px;"
+                    type="button"
+                    onclick="window.game.handleReady()"
+                >Done</button>
             </div>
             <div id="game-status"></div>
         </div>
@@ -57,7 +63,9 @@
     <script src="{{ url_for('static', filename='js/game.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            window.game = new BattleshipGame();
+            const game = new BattleshipGame();
+            window.game = game;  // Make it globally accessible
+            console.log('Game initialized:', game);
         });
     </script>
 </body>

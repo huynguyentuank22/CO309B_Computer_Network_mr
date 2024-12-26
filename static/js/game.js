@@ -134,7 +134,13 @@ class BattleshipGame {
             // Check if all ships are placed
             if (this.isPlacementComplete()) {
                 console.log('All ships placed, showing ready button');
-                document.getElementById('ready-btn').style.display = 'block';
+                const readyBtn = document.getElementById('ready-btn');
+                if (readyBtn) {
+                    readyBtn.style.display = 'block';
+                    console.log('Ready button is now visible');
+                } else {
+                    console.error('Ready button not found when trying to show it');
+                }
             }
         }
     }
@@ -170,16 +176,22 @@ class BattleshipGame {
 
     setupReadyButton() {
         const readyBtn = document.getElementById('ready-btn');
+        if (!readyBtn) {
+            console.error('Ready button not found!');
+            return;
+        }
         console.log('Setting up ready button:', readyBtn);
         readyBtn.style.display = 'none';  // Initially hidden
-        readyBtn.addEventListener('click', async () => {
-            console.log('Ready button clicked');
+        readyBtn.onclick = async () => {
+            console.log('Ready button clicked!');
+            alert('Ready button clicked!');
             try {
                 await this.handleReady();
             } catch (error) {
                 console.error('Error handling ready:', error);
+                alert('Error: ' + error.message);
             }
-        });
+        };
     }
 
     async handleReady() {
