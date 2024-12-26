@@ -20,12 +20,18 @@ class BattleshipGame {
         this.myBoard = document.getElementById('my-board');
         this.opponentBoard = document.getElementById('opponent-board');
         
-        for (let i = 0; i < this.boardSize; i++) {
-            for (let j = 0; j < this.boardSize; j++) {
-                const myCell = this.createCell(i, j, true);
-                const opponentCell = this.createCell(i, j, false);
-                
+        // Create my board
+        for (let y = 0; y < this.boardSize; y++) {
+            for (let x = 0; x < this.boardSize; x++) {
+                const myCell = this.createCell(x, y, true);
                 this.myBoard.appendChild(myCell);
+            }
+        }
+        
+        // Create opponent board
+        for (let y = 0; y < this.boardSize; y++) {
+            for (let x = 0; x < this.boardSize; x++) {
+                const opponentCell = this.createCell(x, y, false);
                 this.opponentBoard.appendChild(opponentCell);
             }
         }
