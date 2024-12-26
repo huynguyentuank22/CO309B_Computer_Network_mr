@@ -186,20 +186,27 @@
         }
 
         async function handleRequest(username, accept) {
-            const response = await fetch('/handle_request', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username: username,
-                    accept: accept
-                })
-            });
-            
-            const result = await response.json();
-            if (result.success && accept) {
-                window.location.href = '/game';
+            try {
+                const response = await fetch('/handle_request', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        accept: accept
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success && accept) {
+                    window.location.href = '/game';
+                } else if (!result.success && accept) {
+                    alert('Failed to connect to opponent. They may be behind a firewall or on a different network.');
+                }
+            } catch (error) {
+                console.error('Connection error:', error);
+                alert('Connection failed. Please try again.');
             }
         }
 

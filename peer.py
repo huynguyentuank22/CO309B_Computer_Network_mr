@@ -27,10 +27,12 @@ class PeerNetwork:
         """Get local IP address."""
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
-            s.connect(('10.254.254.254', 1))
+            s.connect(('8.8.8.8', 80))
             local_ip = s.getsockname()[0]
+            print(f"Local IP: {local_ip}")
         except Exception:
             local_ip = '127.0.0.1'
+            print("Failed to get local IP, using localhost")
         finally:
             s.close()
         return local_ip
@@ -54,7 +56,7 @@ class PeerNetwork:
         try:
             self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            self.tcp_socket.bind((self.local_ip, 0))
+            self.tcp_socket.bind(('0.0.0.0', 0))
             self.tcp_port = self.tcp_socket.getsockname()[1]
             self.tcp_socket.listen(1)
             print(f"TCP socket initialized on port {self.tcp_port}")
@@ -306,7 +308,12 @@ class PeerNetwork:
                     
                     # Connect to peer
                     peer_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    print(f"Attempting to connect to {request['ip']}:{request['tcp_port']}")
+                    # Set a timeout for the connection attempt
+                    peer_socket.settimeout(5)
                     peer_socket.connect((request['ip'], request['tcp_port']))
+                    # Reset to blocking mode after connection
+                    peer_socket.settimeout(None)
                     self.peer_connection = peer_socket
                     self.is_connected = True
                     self.opponent_username = username
@@ -328,6 +335,11 @@ class PeerNetwork:
                     return True
                 except Exception as e:
                     print(f"Connection error: {e}")
+                    # Clean up failed connection
+                    try:
+                        peer_socket.close()
+                    except:
+                        pass
                     return False
         return False
 
