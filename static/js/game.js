@@ -183,14 +183,13 @@ class BattleshipGame {
     }
 
     async handleReady() {
-        console.log('Handling ready state');
-        alert('Checking ready state...');
+        alert('Checking if all ships are placed...');
         if (!this.isPlacementComplete()) {
             alert('Please place all your ships first!');
             return;
         }
 
-        alert('Sending ready status to server...');
+        alert('You are ready! Notifying opponent...');
         const response = await fetch('/player_ready', {
             method: 'POST',
             headers: {
@@ -202,7 +201,7 @@ class BattleshipGame {
         console.log('Player ready result:', result);
 
         if (result.success) {
-            alert('Successfully marked as ready');
+            alert('Successfully marked as ready. Waiting for opponent...');
             this.isReady = true;
             document.getElementById('ready-btn').disabled = true;
             document.getElementById('rotate').disabled = true;
@@ -331,7 +330,11 @@ class BattleshipGame {
         console.log('Received game status:', status);
         if (status.type === 'PLAYER_READY') {
             // Opponent is ready
-            alert(`Opponent ${status.username} is ready!`);
+            if (!this.isReady) {
+                alert(`Opponent is ready! Please finish placing your ships and click Done when ready.`);
+            } else {
+                alert('Opponent is ready! Game will start soon...');
+            }
             document.getElementById('phase-text').textContent = 'Opponent is ready!';
             if (this.isReady) {
                 alert('Both players ready, starting countdown...');
