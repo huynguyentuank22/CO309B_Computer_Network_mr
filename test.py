@@ -18,7 +18,7 @@ class PeerNetwork:
         self.pending_requests: List[Dict] = []
         self.is_broadcasting = False
         self.broadcast_thread = None
-        self.request_lock = threading.Lock()  # Add lock for thread-safe operations
+        self.request_lock = threading.Lock()
 
     def get_local_ip(self):
         """Get local IP address."""
@@ -31,6 +31,46 @@ class PeerNetwork:
         finally:
             s.close()
         return local_ip
+
+    def initialize_tcp_socket(self):
+        """Initialize TCP socket for direct communication."""
+        try:
+            self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.tcp_socket.bind((self.local_ip, 0))  # Use port 0 for automatic port assignment
+            self.tcp_port = self.tcp_socket.getsockname()[1]
+            self.tcp_socket.listen(1)
+            print(f"TCP socket initialized on port {self.tcp_port}")
+            
+            # Start TCP listener thread
+            tcp_listener_thread = threading.Thread(target=self.listen_for_tcp, daemon=True)
+            tcp_listener_thread.start()
+            
+            return True
+        except Exception as e:
+            print(f'Initialize TCP failed: {e}')
+            return False
+
+    def listen_for_tcp(self):
+        """Listen for incoming TCP connections."""
+        while not self.is_connected:
+            try:
+                client_socket, client_address = self.tcp_socket.accept()
+                if not self.is_connected:
+                    self.peer_connection = client_socket
+                    self.is_connected = True
+                    print(f"Accepted TCP connection from {client_address}")
+                    
+                    # Start message handling thread
+                    threading.Thread(target=self.handle_peer_messages, 
+                                   daemon=True).start()
+                else:
+                    # Reject connection if already connected
+                    client_socket.close()
+            except Exception as e:
+                if self.is_connected:  # Only print error if we're still meant to be listening
+                    print(f"TCP accept error: {e}")
+                break
 
     def initialize_udp_socket(self):
         """Initialize UDP socket for broadcasting and listening."""
@@ -183,6 +223,75 @@ class PeerNetwork:
         self.broadcast_thread = threading.Thread(target=broadcast_loop, daemon=True)
         self.broadcast_thread.start()
         return True
+
+    def handle_peer_messages(self):
+        """Handle incoming messages from connected peer."""
+        while self.is_connected:
+            try:
+                data = self.peer_connection.recv(1024)
+                if not data:
+                    break
+                message = pickle.loads(data)
+                if message.get('type') == 'GAME_ACTION':
+                    # Handle game-specific messages
+                    print(f"Received game action: {message}")
+                else:
+                    print(f"Received message: {message}")
+            except Exception as e:
+                print(f"Message handling error: {e}")
+                break
+        
+        self.is_connected = False
+        print("Peer connection lost")
+
+    def accept_connection(self, username):
+        """Accept a connection request from a specific user."""
+        for request in self.pending_requests:
+            if request['username'] == username:
+                try:
+                    # Stop broadcasting if we're searching
+                    self.stop_broadcasting()
+                    
+                    # Initialize TCP connection
+                    if not self.tcp_socket:
+                        if not self.initialize_tcp_socket():
+                            return False
+                    
+                    # Connect to peer
+                    peer_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    peer_socket.connect((request['ip'], request['tcp_port']))
+                    self.peer_connection = peer_socket
+                    self.is_connected = True
+                    print(f"Connected to peer {username} at {request['ip']}:{request['tcp_port']}")
+
+                    # Start message handling thread
+                    threading.Thread(target=self.handle_peer_messages,
+                                  daemon=True).start()
+                    
+                    # Clean up requests
+                    self.pending_requests = []
+                    return True
+                except Exception as e:
+                    print(f"Connection error: {e}")
+                    return False
+        return False
+
+    def stop_broadcasting(self):
+        """Stop broadcasting connection requests."""
+        self.is_broadcasting = False
+        if self.broadcast_thread:
+            self.broadcast_thread.join(timeout=1)
+
+    def send_message(self, message):
+        """Send message to connected peer."""
+        if self.is_connected and self.peer_connection:
+            try:
+                serialized_message = pickle.dumps(message)
+                self.peer_connection.send(serialized_message)
+                print(f"Sent: {message}")
+            except Exception as e:
+                print(f"Message send error: {e}")
+                self.is_connected = False
 
     def start(self):
         """Start the peer network with improved user interface."""
