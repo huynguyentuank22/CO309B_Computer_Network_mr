@@ -142,6 +142,11 @@ class BattleshipGame {
             this.placeShipOnBoard(x, y);
             document.querySelector(`[data-ship="${this.currentShip}"]`).disabled = true;
             this.currentShip = null;
+            
+            // Check if all ships are placed
+            if (this.isPlacementComplete()) {
+                document.getElementById('ready-btn').style.display = 'block';
+            }
         }
     }
 
@@ -176,6 +181,7 @@ class BattleshipGame {
 
     setupReadyButton() {
         const readyBtn = document.getElementById('ready-btn');
+        readyBtn.style.display = 'none';  // Initially hidden
         readyBtn.addEventListener('click', () => this.handleReady());
     }
 
@@ -193,6 +199,8 @@ class BattleshipGame {
         if (result.success) {
             this.isReady = true;
             document.getElementById('ready-btn').disabled = true;
+            document.getElementById('rotate').disabled = true;
+            document.querySelectorAll('.ships button').forEach(btn => btn.disabled = true);
             document.getElementById('phase-text').textContent = 'Waiting for opponent...';
             
             if (result.both_ready) {
