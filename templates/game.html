@@ -14,11 +14,25 @@
         <div class="boards">
             <div class="board-container">
                 <h2>Your Board</h2>
-                <div id="my-board" class="board"></div>
+                <div id="my-board" class="board">
+                    <!-- Create 10x10 grid cells -->
+                    {% for y in range(10) %}
+                        {% for x in range(10) %}
+                            <div class="cell" data-x="{{ x }}" data-y="{{ y }}"></div>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
             </div>
             <div class="board-container">
                 <h2>Opponent's Board</h2>
-                <div id="opponent-board" class="board"></div>
+                <div id="opponent-board" class="board">
+                    <!-- Create 10x10 grid cells -->
+                    {% for y in range(10) %}
+                        {% for x in range(10) %}
+                            <div class="cell" data-x="{{ x }}" data-y="{{ y }}"></div>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
                 <div id="turn-indicator"></div>
             </div>
         </div>
@@ -39,54 +53,11 @@
             <div id="game-status"></div>
         </div>
     </div>
+    <!-- Load game.js first -->
     <script src="{{ url_for('static', filename='js/game.js') }}"></script>
     <script>
-        class BattleshipGame {
-            constructor() {
-                this.boardSize = 10;
-                this.currentShip = null;
-                this.orientation = 'horizontal';
-                this.isPlacingShip = false;
-                this.setupBoards();
-                this.setupControls();
-                this.setupPreview();
-                this.startConnectionCheck();
-                this.setupExitHandler();
-            }
-
-            setupExitHandler() {
-                // Handle page unload (close/refresh/navigate away)
-                window.addEventListener('beforeunload', () => {
-                    // Send disconnect request to server
-                    fetch('/disconnect', { 
-                        method: 'POST',
-                        keepalive: true  // Ensures request is sent even if page is unloading
-                    });
-                });
-            }
-
-            startConnectionCheck() {
-                setInterval(() => {
-                    fetch('/check_connection')
-                        .then(response => response.json())
-                        .then(data => {
-                            if (!data.connected) {
-                                // Show disconnect message if provided
-                                const message = data.status || 'Connection lost';
-                                alert(message);
-                                // Navigate back to lobby
-                                window.location.href = '/lobby';
-                            }
-                        })
-                        .catch(error => console.error('Connection check error:', error));
-                }, 2000);
-            }
-
-            // ... rest of the class code ...
-        }
-
         document.addEventListener('DOMContentLoaded', () => {
-            new BattleshipGame();
+            window.game = new BattleshipGame();
         });
     </script>
 </body>

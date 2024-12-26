@@ -20,30 +20,18 @@ class BattleshipGame {
         this.myBoard = document.getElementById('my-board');
         this.opponentBoard = document.getElementById('opponent-board');
         
-        for (let i = 0; i < this.boardSize; i++) {
-            for (let j = 0; j < this.boardSize; j++) {
-                const myCell = this.createCell(i, j, true);
-                const opponentCell = this.createCell(i, j, false);
-                
-                this.myBoard.appendChild(myCell);
-                this.opponentBoard.appendChild(opponentCell);
-            }
-        }
-    }
-
-    createCell(x, y, isMyBoard) {
-        const cell = document.createElement('div');
-        cell.className = 'cell';
-        cell.dataset.x = x;
-        cell.dataset.y = y;
-        
-        if (isMyBoard) {
+        // Add event listeners to cells
+        this.myBoard.querySelectorAll('.cell').forEach(cell => {
+            const x = parseInt(cell.dataset.x);
+            const y = parseInt(cell.dataset.y);
             cell.addEventListener('click', () => this.handleMyBoardClick(x, y));
-        } else {
-            cell.addEventListener('click', () => this.handleOpponentBoardClick(x, y));
-        }
+        });
         
-        return cell;
+        this.opponentBoard.querySelectorAll('.cell').forEach(cell => {
+            const x = parseInt(cell.dataset.x);
+            const y = parseInt(cell.dataset.y);
+            cell.addEventListener('click', () => this.handleOpponentBoardClick(x, y));
+        });
     }
 
     setupControls() {
@@ -233,11 +221,13 @@ class BattleshipGame {
     }
 
     startCountdown() {
+        console.log('Starting countdown');
         const countdownDiv = document.getElementById('countdown');
         countdownDiv.style.display = 'block';
         let count = 3;
 
         const countInterval = setInterval(() => {
+            console.log('Countdown:', count);
             if (count > 0) {
                 countdownDiv.textContent = count;
                 count--;
@@ -250,6 +240,7 @@ class BattleshipGame {
     }
 
     startGame() {
+        console.log('Starting game');
         this.gameStarted = true;
         document.getElementById('ship-placement').style.display = 'none';
         document.getElementById('phase-text').textContent = 'Battle Phase';

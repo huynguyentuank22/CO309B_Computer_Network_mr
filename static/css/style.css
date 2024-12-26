@@ -6,30 +6,36 @@
 
 .boards {
     display: flex;
-    justify-content: space-around;
+    justify-content: center;
     margin-bottom: 20px;
+    gap: 40px;
 }
 
 .board-container {
     text-align: center;
+    margin: 0 20px;
 }
 
 .board {
     display: grid;
-    grid-template-columns: repeat(10, 40px);
-    grid-template-rows: repeat(10, 40px);
+    grid-template-columns: repeat(10, 1fr);
     gap: 1px;
     background-color: #ccc;
     padding: 10px;
     border-radius: 5px;
+    width: 400px;
+    height: 400px;
+    box-sizing: border-box;
 }
 
 .cell {
-    width: 40px;
-    height: 40px;
+    width: 100%;
+    height: 0;
+    padding-bottom: 100%;
     background-color: #fff;
     border: 1px solid #999;
     cursor: pointer;
+    position: relative;
 }
 
 .ship {
