@@ -257,6 +257,22 @@ class PeerNetwork:
                 print(f"   Signal Strength: {'█' * request['strength']}")
                 print("-" * 50)
 
+    def get_pending_requests(self):
+        """Get list of pending connection requests."""
+        with self.request_lock:
+            current_time = time.time()
+            # Clean up old requests before returning
+            self.pending_requests = [
+                r for r in self.pending_requests 
+                if current_time - r['timestamp'] < 30
+            ]
+            # Return only necessary information for the frontend
+            return [{
+                'username': r['username'],
+                'timestamp': r['timestamp'],
+                'strength': r['strength']
+            } for r in self.pending_requests]
+
     def accept_connection(self, username):
         """Accept a connection request from a specific user."""
         for request in self.pending_requests:
