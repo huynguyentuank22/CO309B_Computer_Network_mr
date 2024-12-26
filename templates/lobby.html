@@ -151,6 +151,7 @@
             fetch('/get_requests')
                 .then(response => response.json())
                 .then(requests => {
+                    console.log('Received requests:', requests);
                     const requestsList = document.getElementById('requestsList');
                     requestsList.innerHTML = '';
                     
@@ -166,6 +167,9 @@
                         `;
                         requestsList.appendChild(requestItem);
                     });
+                })
+                .catch(error => {
+                    console.error('Error polling requests:', error);
                 });
         }
 

@@ -167,14 +167,17 @@ class PeerNetwork:
 
     def listen_for_udp(self):
         """Listen for incoming UDP messages with improved error handling and validation."""
+        print(f"Starting UDP listener for {self.username}...")
         while True:
             try:
-                data, addr = self.udp_socket.recvfrom(4096)  # Increased buffer size
+                data, addr = self.udp_socket.recvfrom(4096)
+                print(f"Received UDP data from {addr}")
                 if not data:
                     continue
 
                 try:
                     message = pickle.loads(data)
+                    print(f"Decoded message: {message}")
                 except pickle.UnpicklingError:
                     print(f"Invalid message format from {addr}")
                     continue
@@ -259,6 +262,7 @@ class PeerNetwork:
 
     def get_pending_requests(self):
         """Get list of pending connection requests."""
+        print(f"Getting pending requests for {self.username}")
         with self.request_lock:
             current_time = time.time()
             # Clean up old requests before returning
@@ -266,6 +270,7 @@ class PeerNetwork:
                 r for r in self.pending_requests 
                 if current_time - r['timestamp'] < 30
             ]
+            print(f"Current pending requests: {self.pending_requests}")
             # Return only necessary information for the frontend
             return [{
                 'username': r['username'],

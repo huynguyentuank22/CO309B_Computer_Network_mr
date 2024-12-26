@@ -21,8 +21,13 @@ def create_game():
     
     # Create peer network instance
     peer = PeerNetwork(username)
-    peer_thread = threading.Thread(target=peer.initialize_udp_socket, daemon=True)
-    peer_thread.start()
+    # Initialize UDP socket
+    if not peer.initialize_udp_socket():
+        return jsonify({'error': 'Failed to initialize network'}), 500
+    
+    # Start UDP listener thread
+    udp_listener_thread = threading.Thread(target=peer.listen_for_udp, daemon=True)
+    udp_listener_thread.start()
     
     # Create game instance
     game = BattleshipGame(username)
