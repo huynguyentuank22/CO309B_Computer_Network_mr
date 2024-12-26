@@ -145,13 +145,16 @@ def check_connection():
     if peer and peer.is_connected:
         game_status = None
         if game and game.ready:
+            print(f"Player {username} is ready")
             # Check if opponent is ready
             opponent_game = game_instances.get(peer.opponent_username)
             if opponent_game and opponent_game.ready:
+                print(f"Both players are ready")
                 game_status = {
                     'type': 'PLAYER_READY'
                 }
             if game.game_started:
+                print(f"Game started, {username}'s turn: {game.my_turn}")
                 game_status = {
                     'type': 'GAME_START',
                     'first_player': game.my_turn

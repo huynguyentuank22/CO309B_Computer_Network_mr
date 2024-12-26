@@ -186,17 +186,26 @@ class BattleshipGame {
     }
 
     async handleReady() {
+        console.log('handleReady called');
         if (!this.isPlacementComplete()) {
+            console.log('Not all ships placed');
             alert('Please place all your ships first!');
             return;
         }
 
+        console.log('Sending player_ready request');
         const response = await fetch('/player_ready', {
-            method: 'POST'
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
         });
-        const result = await response.json();
         
+        const result = await response.json();
+        console.log('player_ready response:', result);
+
         if (result.success) {
+            console.log('Ready success, updating UI');
             this.isReady = true;
             document.getElementById('ready-btn').disabled = true;
             document.getElementById('rotate').disabled = true;
@@ -204,6 +213,7 @@ class BattleshipGame {
             document.getElementById('phase-text').textContent = 'Waiting for opponent...';
             
             if (result.both_ready) {
+                console.log('Both players ready, starting countdown');
                 this.startCountdown();
             }
         }
@@ -215,11 +225,13 @@ class BattleshipGame {
     }
 
     startCountdown() {
+        console.log('Starting countdown');
         const countdownDiv = document.getElementById('countdown');
         countdownDiv.style.display = 'block';
         let count = 3;
 
         const countInterval = setInterval(() => {
+            console.log('Countdown:', count);
             if (count > 0) {
                 countdownDiv.textContent = count;
                 count--;
@@ -232,6 +244,7 @@ class BattleshipGame {
     }
 
     startGame() {
+        console.log('Starting game');
         this.gameStarted = true;
         document.getElementById('ship-placement').style.display = 'none';
         document.getElementById('phase-text').textContent = 'Battle Phase';
