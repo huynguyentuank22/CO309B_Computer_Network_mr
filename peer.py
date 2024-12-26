@@ -151,7 +151,7 @@ class PeerNetwork:
 
     def reject_connection(self, username):
         """Reject a connection request from a specific user."""
-        self.pending_requests = [r for r in r['username'] != username]
+        self.pending_requests = [r for r in self.pending_requests if r['username'] != username]
 
     def listen_for_udp(self):
         """Modified UDP listener to handle connection requests."""
