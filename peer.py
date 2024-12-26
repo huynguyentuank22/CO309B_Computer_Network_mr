@@ -86,7 +86,7 @@ class PeerNetwork:
                     
                     # Send connection confirmation
                     self.send_message({
-                        'type': 'GAME_START',
+                        'type': 'CONNECTION_ACCEPTED',
                         'username': self.username
                     })
                 else:
@@ -362,6 +362,9 @@ class PeerNetwork:
                 
                 if message.get('type') == 'GAME_ACTION':
                     print(f"Received game action: {message}")
+                elif message.get('type') == 'CONNECTION_ACCEPTED':
+                    print(f"Connection accepted by {message['username']}")
+                    self.opponent_username = message['username']
                 elif message.get('type') == 'PLAYER_READY':
                     print(f"Player {message['username']} is ready")
                 elif message.get('type') == 'GAME_START':

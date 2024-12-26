@@ -152,7 +152,7 @@
             fetch('/check_connection')
                 .then(response => response.json())
                 .then(data => {
-                    if (data.connected) {
+                    if (data.connected && data.opponent) {
                         // If connected, navigate to game page
                         window.location.href = '/game';
                         return;
