@@ -92,8 +92,14 @@ def broadcast_request():
     username = session.get('username')
     peer = peer_instances.get(username)
     if peer:
-        peer.broadcast_connect_request()
-    return jsonify({'success': True})
+        success = peer.broadcast_connect_request()
+        if success:
+            return jsonify({'success': True})
+        return jsonify({
+            'success': False, 
+            'error': 'Failed to initialize connection'
+        }), 500
+    return jsonify({'success': False, 'error': 'Peer not found'}), 404
 
 @app.route('/cancel_search', methods=['POST'])
 def cancel_search():

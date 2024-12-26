@@ -77,6 +77,11 @@
             background-color: #fff3cd;
             color: #856404;
         }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
     </style>
 </head>
 <body>
@@ -108,14 +113,28 @@
             
             if (!isSearching) {
                 // Start searching
-                isSearching = true;
-                btn.textContent = 'Cancel Search';
-                statusMsg.textContent = 'Searching for opponents...';
-                statusMsg.classList.add('searching');
-                statusMsg.style.display = 'block';
-                
-                // Send broadcast request
-                await fetch('/broadcast_request', { method: 'POST' });
+                try {
+                    const response = await fetch('/broadcast_request', { method: 'POST' });
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        isSearching = true;
+                        btn.textContent = 'Cancel Search';
+                        statusMsg.textContent = 'Searching for opponents...';
+                        statusMsg.classList.add('searching');
+                        statusMsg.style.display = 'block';
+                    } else {
+                        statusMsg.textContent = result.error || 'Failed to start search';
+                        statusMsg.classList.remove('searching');
+                        statusMsg.classList.add('error');
+                        statusMsg.style.display = 'block';
+                    }
+                } catch (error) {
+                    statusMsg.textContent = 'Connection error occurred';
+                    statusMsg.classList.remove('searching');
+                    statusMsg.classList.add('error');
+                    statusMsg.style.display = 'block';
+                }
             } else {
                 // Cancel searching
                 isSearching = false;

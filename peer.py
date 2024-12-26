@@ -113,21 +113,32 @@ class PeerNetwork:
 
     def broadcast_connect_request(self):
         """Start broadcasting connection requests."""
+        # Initialize TCP socket if not already done
+        if not self.tcp_socket:
+            if not self.initialize_tcp_socket():
+                return False
+
         self.is_broadcasting = True
         self.broadcast_thread = threading.Thread(target=self._broadcast_loop, daemon=True)
         self.broadcast_thread.start()
+        return True
 
     def _broadcast_loop(self):
         """Continuously broadcast connection requests."""
         while self.is_broadcasting:
-            request_msg = pickle.dumps({
-                'type': 'CONNECT_REQUEST',
-                'username': self.username,
-                'local_ip': self.local_ip,
-                'tcp_port': self.tcp_port
-            })
-            self.udp_socket.sendto(request_msg, ('<broadcast>', self.UDP_PORT))
-            time.sleep(2)  # Broadcast every 2 seconds
+            try:
+                request_msg = pickle.dumps({
+                    'type': 'CONNECT_REQUEST',
+                    'username': self.username,
+                    'local_ip': self.local_ip,
+                    'tcp_port': self.tcp_port
+                })
+                self.udp_socket.sendto(request_msg, ('<broadcast>', self.UDP_PORT))
+                time.sleep(2)  # Broadcast every 2 seconds
+            except Exception as e:
+                print(f"Broadcasting error: {e}")
+                self.is_broadcasting = False
+                break
 
     def stop_broadcasting(self):
         """Stop broadcasting connection requests."""
@@ -137,6 +148,12 @@ class PeerNetwork:
 
     def get_pending_requests(self):
         """Get list of pending connection requests."""
+        # Remove requests older than 30 seconds
+        current_time = time.time()
+        self.pending_requests = [
+            r for r in self.pending_requests 
+            if current_time - r.get('timestamp', 0) < 30
+        ]
         return self.pending_requests
 
     def accept_connection(self, username):
@@ -165,12 +182,18 @@ class PeerNetwork:
                     request = {
                         'username': message['username'],
                         'ip': addr[0],
-                        'tcp_port': message['tcp_port']
+                        'tcp_port': message['tcp_port'],
+                        'timestamp': time.time()  # Add timestamp to track request age
                     }
-                    if request not in self.pending_requests:
-                        self.pending_requests.append(request)
+                    # Remove any existing request from same user
+                    self.pending_requests = [
+                        r for r in self.pending_requests 
+                        if r['username'] != request['username']
+                    ]
+                    self.pending_requests.append(request)
 
             except Exception as e:
+                print(f"UDP listener error: {e}")
                 continue
 
     def connect_to_peer(self, peer_ip, peer_port):
