@@ -20,36 +20,18 @@ class BattleshipGame {
         this.myBoard = document.getElementById('my-board');
         this.opponentBoard = document.getElementById('opponent-board');
         
-        // Create my board
-        for (let y = 0; y < this.boardSize; y++) {
-            for (let x = 0; x < this.boardSize; x++) {
-                const myCell = this.createCell(x, y, true);
-                this.myBoard.appendChild(myCell);
-            }
-        }
-        
-        // Create opponent board
-        for (let y = 0; y < this.boardSize; y++) {
-            for (let x = 0; x < this.boardSize; x++) {
-                const opponentCell = this.createCell(x, y, false);
-                this.opponentBoard.appendChild(opponentCell);
-            }
-        }
-    }
-
-    createCell(x, y, isMyBoard) {
-        const cell = document.createElement('div');
-        cell.className = 'cell';
-        cell.dataset.x = x;
-        cell.dataset.y = y;
-        
-        if (isMyBoard) {
+        // Add event listeners to cells
+        this.myBoard.querySelectorAll('.cell').forEach(cell => {
+            const x = parseInt(cell.dataset.x);
+            const y = parseInt(cell.dataset.y);
             cell.addEventListener('click', () => this.handleMyBoardClick(x, y));
-        } else {
-            cell.addEventListener('click', () => this.handleOpponentBoardClick(x, y));
-        }
+        });
         
-        return cell;
+        this.opponentBoard.querySelectorAll('.cell').forEach(cell => {
+            const x = parseInt(cell.dataset.x);
+            const y = parseInt(cell.dataset.y);
+            cell.addEventListener('click', () => this.handleOpponentBoardClick(x, y));
+        });
     }
 
     setupControls() {
