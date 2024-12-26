@@ -2,10 +2,12 @@ import socket
 import threading
 import time
 import pickle
+from typing import List, Dict
+import logging
 
 
 class PeerNetwork:
-    def __init__(self, username):
+    def __init__(self, username: str):
         self.username = username
         self.local_ip = self.get_local_ip()
         self.UDP_PORT = 5005
@@ -14,9 +16,10 @@ class PeerNetwork:
         self.tcp_port = None
         self.peer_connection = None
         self.is_connected = False
-        self.pending_requests = []
+        self.pending_requests: List[Dict] = []
         self.is_broadcasting = False
         self.broadcast_thread = None
+        self.request_lock = threading.Lock()
 
     def get_local_ip(self):
         """Get local IP address."""
@@ -32,11 +35,17 @@ class PeerNetwork:
 
     def initialize_udp_socket(self):
         """Initialize UDP socket for broadcasting and listening."""
-        self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.udp_socket.bind((self.local_ip, self.UDP_PORT))
-        print(f"Listening for connection requests on UDP port {self.UDP_PORT}...")
+        try:
+            self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            # Bind to all interfaces for better broadcast reception
+            self.udp_socket.bind(('', self.UDP_PORT))
+            print(f"Listening for connection requests on UDP port {self.UDP_PORT}...")
+            return True
+        except Exception as e:
+            print(f"UDP socket initialization failed: {e}")
+            return False
 
     def initialize_tcp_socket(self):
         """Initialize TCP socket for direct communication."""
@@ -108,29 +117,43 @@ class PeerNetwork:
                     self.send_message(message)
 
     def broadcast_connect_request(self):
-        """Start broadcasting connection requests."""
+        """Start broadcasting connection requests with improved reliability."""
         if not self.tcp_socket:
             if not self.initialize_tcp_socket():
+                return False
+
+        if not self.udp_socket:
+            if not self.initialize_udp_socket():
                 return False
 
         print(f"Broadcasting connection request from {self.username}...")
         self.is_broadcasting = True
         
         def broadcast_loop():
+            broadcast_count = 0
             while self.is_broadcasting and not self.is_connected:
                 try:
                     request_msg = pickle.dumps({
                         'type': 'CONNECT_REQUEST',
                         'username': self.username,
                         'local_ip': self.local_ip,
-                        'tcp_port': self.tcp_port
+                        'tcp_port': self.tcp_port,
+                        'sequence': broadcast_count
                     })
+                    
+                    # Send to broadcast address
                     self.udp_socket.sendto(request_msg, ('<broadcast>', self.UDP_PORT))
-                    time.sleep(2)  # Broadcast every 2 seconds
+                    
+                    # Also try sending to subnet broadcast
+                    subnet_broadcast = '.'.join(self.local_ip.split('.')[:-1] + ['255'])
+                    self.udp_socket.sendto(request_msg, (subnet_broadcast, self.UDP_PORT))
+                    
+                    broadcast_count += 1
+                    time.sleep(1)  # Broadcast more frequently
                 except Exception as e:
                     print(f"Broadcasting error: {e}")
-                    self.is_broadcasting = False
-                    break
+                    time.sleep(1)  # Prevent tight loop on error
+                    continue
 
         self.broadcast_thread = threading.Thread(target=broadcast_loop, daemon=True)
         self.broadcast_thread.start()
@@ -143,55 +166,96 @@ class PeerNetwork:
             self.broadcast_thread.join(timeout=1)
 
     def listen_for_udp(self):
-        """Listen for incoming UDP messages."""
+        """Listen for incoming UDP messages with improved error handling and validation."""
         while True:
             try:
-                data, addr = self.udp_socket.recvfrom(1024)
-                message = pickle.loads(data)
+                data, addr = self.udp_socket.recvfrom(4096)  # Increased buffer size
+                if not data:
+                    continue
 
-                if message['type'] == 'CONNECT_REQUEST' and addr[0] != self.local_ip:
-                    # Store the request with timestamp
+                try:
+                    message = pickle.loads(data)
+                except pickle.UnpicklingError:
+                    print(f"Invalid message format from {addr}")
+                    continue
+
+                if not isinstance(message, dict) or 'type' not in message:
+                    print(f"Malformed message from {addr}")
+                    continue
+
+                if (message['type'] == 'CONNECT_REQUEST' and 
+                    addr[0] != self.local_ip and  # Ignore self-broadcasts
+                    not self.is_connected):  # Only process if not already connected
+                    
+                    # Validate required fields
+                    required_fields = ['username', 'local_ip', 'tcp_port']
+                    if not all(field in message for field in required_fields):
+                        print(f"Missing required fields in message from {addr}")
+                        continue
+
                     request = {
                         'username': message['username'],
-                        'ip': addr[0],
+                        'ip': addr[0],  # Use actual sender IP
                         'tcp_port': message['tcp_port'],
-                        'timestamp': time.time()
+                        'timestamp': time.time(),
+                        'strength': 1  # New field to track request persistence
                     }
-                    # Update or add new request
+
                     self.update_pending_requests(request)
+                    print(f"\nNew connection request from {request['username']} at {request['ip']}")
+                    self.display_pending_requests()
 
+            except socket.error as e:
+                print(f"UDP socket error: {e}")
+                time.sleep(1)  # Prevent tight loop on error
             except Exception as e:
-                print(f"UDP listener error: {e}")
-                continue
+                print(f"Unexpected error in UDP listener: {e}")
+                time.sleep(1)
 
-    def update_pending_requests(self, new_request):
-        """Update pending requests list, removing old requests."""
-        current_time = time.time()
-        
-        # Remove requests older than 30 seconds
-        self.pending_requests = [
-            r for r in self.pending_requests 
-            if current_time - r['timestamp'] < 30
-        ]
-        
-        # Remove existing request from same user if exists
-        self.pending_requests = [
-            r for r in self.pending_requests 
-            if r['username'] != new_request['username']
-        ]
-        
-        # Add new request
-        self.pending_requests.append(new_request)
+    def update_pending_requests(self, new_request: Dict):
+        """Update pending requests with thread safety and improved handling."""
+        with self.request_lock:
+            current_time = time.time()
+            
+            # Remove expired requests (older than 30 seconds)
+            self.pending_requests = [
+                r for r in self.pending_requests 
+                if current_time - r['timestamp'] < 30
+            ]
+            
+            # Check if request from this user already exists
+            existing_request = next(
+                (r for r in self.pending_requests 
+                 if r['username'] == new_request['username']),
+                None
+            )
+            
+            if existing_request:
+                # Update existing request
+                existing_request['timestamp'] = current_time
+                existing_request['strength'] += 1
+                existing_request['ip'] = new_request['ip']
+                existing_request['tcp_port'] = new_request['tcp_port']
+            else:
+                # Add new request
+                self.pending_requests.append(new_request)
 
-    def get_pending_requests(self):
-        """Get list of pending connection requests."""
-        current_time = time.time()
-        # Clean up old requests before returning
-        self.pending_requests = [
-            r for r in self.pending_requests 
-            if current_time - r['timestamp'] < 30
-        ]
-        return self.pending_requests
+    def display_pending_requests(self):
+        """Display current pending requests in a formatted way."""
+        with self.request_lock:
+            if not self.pending_requests:
+                print("\nNo pending connection requests.")
+                return
+
+            print("\nPending connection requests:")
+            print("-" * 50)
+            for i, request in enumerate(self.pending_requests, 1):
+                age = time.time() - request['timestamp']
+                print(f"{i}. Username: {request['username']}")
+                print(f"   IP: {request['ip']}:{request['tcp_port']}")
+                print(f"   Age: {age:.1f} seconds")
+                print(f"   Signal Strength: {'█' * request['strength']}")
+                print("-" * 50)
 
     def accept_connection(self, username):
         """Accept a connection request from a specific user."""
