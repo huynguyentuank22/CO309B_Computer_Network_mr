@@ -4,9 +4,16 @@ class BattleshipGame {
         this.currentShip = null;
         this.orientation = 'horizontal';
         this.isPlacingShip = false;
+        this.isReady = false;
+        this.gameStarted = false;
+        this.myTurn = false;
+        
         this.setupBoards();
         this.setupControls();
         this.setupPreview();
+        this.startConnectionCheck();
+        this.setupExitHandler();
+        this.setupReadyButton();
     }
 
     setupBoards() {
@@ -139,6 +146,8 @@ class BattleshipGame {
     }
 
     async handleOpponentBoardClick(x, y) {
+        if (!this.gameStarted || !this.myTurn) return;
+
         const response = await fetch('/fire', {
             method: 'POST',
             headers: {
@@ -148,10 +157,10 @@ class BattleshipGame {
         });
         
         const result = await response.json();
-        const cell = this.opponentBoard.querySelector(`[data-x="${x}"][data-y="${y}"]`);
-        cell.classList.add(result.hit ? 'hit' : 'miss');
-        
-        document.getElementById('game-status').textContent = result.message;
+        if (result.valid) {
+            this.myTurn = false;
+            this.updateTurnIndicator();
+        }
     }
 
     placeShipOnBoard(x, y) {
@@ -163,6 +172,115 @@ class BattleshipGame {
             const cell = this.myBoard.querySelector(`[data-x="${cellX}"][data-y="${cellY}"]`);
             cell.classList.add('ship');
         }
+    }
+
+    setupReadyButton() {
+        const readyBtn = document.getElementById('ready-btn');
+        readyBtn.addEventListener('click', () => this.handleReady());
+    }
+
+    async handleReady() {
+        if (!this.isPlacementComplete()) {
+            alert('Please place all your ships first!');
+            return;
+        }
+
+        const response = await fetch('/player_ready', {
+            method: 'POST'
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            this.isReady = true;
+            document.getElementById('ready-btn').disabled = true;
+            document.getElementById('phase-text').textContent = 'Waiting for opponent...';
+            
+            if (result.both_ready) {
+                this.startCountdown();
+            }
+        }
+    }
+
+    isPlacementComplete() {
+        const placedShips = document.querySelectorAll('.ships button[disabled]');
+        return placedShips.length === 5;  // All 5 ships should be placed
+    }
+
+    startCountdown() {
+        const countdownDiv = document.getElementById('countdown');
+        countdownDiv.style.display = 'block';
+        let count = 3;
+
+        const countInterval = setInterval(() => {
+            if (count > 0) {
+                countdownDiv.textContent = count;
+                count--;
+            } else {
+                clearInterval(countInterval);
+                countdownDiv.style.display = 'none';
+                this.startGame();
+            }
+        }, 1000);
+    }
+
+    startGame() {
+        this.gameStarted = true;
+        document.getElementById('ship-placement').style.display = 'none';
+        document.getElementById('phase-text').textContent = 'Battle Phase';
+        this.updateTurnIndicator();
+    }
+
+    updateTurnIndicator() {
+        const indicator = document.getElementById('turn-indicator');
+        indicator.textContent = this.myTurn ? 'Your Turn' : "Opponent's Turn";
+        indicator.className = this.myTurn ? 'my-turn' : 'opponent-turn';
+        
+        // Enable/disable opponent board clicks based on turn
+        const cells = this.opponentBoard.getElementsByClassName('cell');
+        for (let cell of cells) {
+            cell.style.cursor = this.myTurn ? 'pointer' : 'not-allowed';
+        }
+    }
+
+    handleAttackResult(x, y, result) {
+        const cell = this.opponentBoard.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+        cell.classList.add(result.hit ? 'hit' : 'miss');
+        
+        document.getElementById('game-status').textContent = result.message;
+        
+        if (result.game_over) {
+            this.handleGameOver(true);  // We won
+        }
+    }
+
+    handleIncomingAttack(x, y) {
+        if (!this.gameStarted) return;
+
+        fetch('/receive_attack', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ x, y })
+        })
+        .then(response => response.json())
+        .then(result => {
+            const cell = this.myBoard.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+            cell.classList.add(result.hit ? 'hit' : 'miss');
+            
+            if (result.game_over) {
+                this.handleGameOver(false);  // We lost
+            } else {
+                this.myTurn = true;
+                this.updateTurnIndicator();
+            }
+        });
+    }
+
+    handleGameOver(won) {
+        const message = won ? 'Congratulations! You won!' : 'Game Over! You lost!';
+        alert(message);
+        window.location.href = '/lobby';
     }
 }
 

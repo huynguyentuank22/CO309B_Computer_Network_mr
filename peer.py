@@ -356,20 +356,19 @@ class PeerNetwork:
             try:
                 data = self.peer_connection.recv(1024)
                 if not data:
-                    # Connection closed by peer
                     self.handle_disconnect("Opponent disconnected")
                     break
                 message = pickle.loads(data)
-                # Handle different message types
+                
                 if message.get('type') == 'GAME_ACTION':
-                    # Handle game-specific messages
                     print(f"Received game action: {message}")
+                elif message.get('type') == 'PLAYER_READY':
+                    print(f"Player {message['username']} is ready")
                 elif message.get('type') == 'GAME_START':
-                    print(f"Game starting with {message.get('username')}")
-                    # Set opponent username
-                    self.opponent_username = message.get('username')
+                    print(f"Game starting, first player: {message['first_player']}")
+                elif message.get('type') == 'FIRE':
+                    print(f"Received fire at {message['x']}, {message['y']}")
                 elif message.get('type') == 'DISCONNECT':
-                    # Handle graceful disconnect from opponent
                     self.handle_disconnect(message.get('message', 'Opponent disconnected'))
                     break
                 else:

@@ -169,5 +169,63 @@ def disconnect():
         peer.handle_disconnect("You left the game")
     return jsonify({'success': True})
 
+@app.route('/player_ready', methods=['POST'])
+def player_ready():
+    username = session.get('username')
+    game = game_instances.get(username)
+    peer = peer_instances.get(username)
+    
+    if not game or not peer:
+        return jsonify({'success': False}), 404
+    
+    if not game.is_placement_complete():
+        return jsonify({'success': False, 'message': 'Not all ships placed'}), 400
+    
+    game.ready = True
+    
+    # Notify opponent
+    if peer.is_connected:
+        peer.send_message({
+            'type': 'PLAYER_READY',
+            'username': username
+        })
+    
+    # Check if both players are ready
+    opponent_game = game_instances.get(peer.opponent_username)
+    both_ready = opponent_game and opponent_game.ready
+    
+    if both_ready:
+        # Randomly choose who goes first
+        import random
+        game.my_turn = random.choice([True, False])
+        opponent_game.my_turn = not game.my_turn
+        
+        # Start the game
+        game.game_started = True
+        opponent_game.game_started = True
+        
+        # Notify opponent of turn order
+        peer.send_message({
+            'type': 'GAME_START',
+            'first_player': username if game.my_turn else peer.opponent_username
+        })
+    
+    return jsonify({
+        'success': True,
+        'both_ready': both_ready
+    })
+
+@app.route('/receive_attack', methods=['POST'])
+def receive_attack():
+    data = request.json
+    username = session.get('username')
+    game = game_instances.get(username)
+    
+    if not game:
+        return jsonify({'error': 'Game not found'}), 404
+    
+    result = game.receive_attack(data['x'], data['y'])
+    return jsonify(result)
+
 if __name__ == '__main__':
     app.run(debug=True) 
