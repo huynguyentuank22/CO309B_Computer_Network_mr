@@ -145,6 +145,7 @@ class BattleshipGame {
             
             // Check if all ships are placed
             if (this.isPlacementComplete()) {
+                console.log('All ships placed, showing ready button');
                 document.getElementById('ready-btn').style.display = 'block';
             }
         }
@@ -181,21 +182,35 @@ class BattleshipGame {
 
     setupReadyButton() {
         const readyBtn = document.getElementById('ready-btn');
+        console.log('Setting up ready button:', readyBtn);
         readyBtn.style.display = 'none';  // Initially hidden
-        readyBtn.addEventListener('click', () => this.handleReady());
+        readyBtn.addEventListener('click', async () => {
+            console.log('Ready button clicked');
+            try {
+                await this.handleReady();
+            } catch (error) {
+                console.error('Error handling ready:', error);
+            }
+        });
     }
 
     async handleReady() {
+        console.log('Handling ready state');
         if (!this.isPlacementComplete()) {
             alert('Please place all your ships first!');
             return;
         }
 
         const response = await fetch('/player_ready', {
-            method: 'POST'
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
         });
+        console.log('Player ready response:', response);
         const result = await response.json();
-        
+        console.log('Player ready result:', result);
+
         if (result.success) {
             this.isReady = true;
             document.getElementById('ready-btn').disabled = true;
@@ -206,11 +221,14 @@ class BattleshipGame {
             if (result.both_ready) {
                 this.startCountdown();
             }
+        } else {
+            alert(result.message || 'Failed to ready up');
         }
     }
 
     isPlacementComplete() {
         const placedShips = document.querySelectorAll('.ships button[disabled]');
+        console.log('Placed ships count:', placedShips.length);
         return placedShips.length === 5;  // All 5 ships should be placed
     }
 

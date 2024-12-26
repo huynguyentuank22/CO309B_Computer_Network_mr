@@ -68,15 +68,24 @@
 .ready-button {
     margin-top: 20px;
     padding: 10px 30px;
-    background-color: #4CAF50;
+    background-color: #2196F3;
     color: white;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     font-size: 16px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 200px;
 }
 
 .ready-button:disabled {
     background-color: #cccccc;
     cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.ready-button:hover:not(:disabled) {
+    background-color: #1976D2;
 } 
