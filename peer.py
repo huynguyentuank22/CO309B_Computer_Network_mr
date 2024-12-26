@@ -79,6 +79,12 @@ class PeerNetwork:
                     # Start message handling thread
                     threading.Thread(target=self.handle_peer_messages, 
                                    daemon=True).start()
+                    
+                    # Send connection confirmation
+                    self.send_message({
+                        'type': 'GAME_START',
+                        'username': self.username
+                    })
                 else:
                     # Reject connection if already connected
                     client_socket.close()
@@ -296,6 +302,7 @@ class PeerNetwork:
                     peer_socket.connect((request['ip'], request['tcp_port']))
                     self.peer_connection = peer_socket
                     self.is_connected = True
+                    self.opponent_username = username
                     print(f"Connected to peer {username} at {request['ip']}:{request['tcp_port']}")
 
                     # Start message handling thread
@@ -304,6 +311,13 @@ class PeerNetwork:
                     
                     # Clean up requests
                     self.pending_requests = []
+                    
+                    # Send connection confirmation
+                    self.send_message({
+                        'type': 'GAME_START',
+                        'username': self.username
+                    })
+                    
                     return True
                 except Exception as e:
                     print(f"Connection error: {e}")
@@ -325,9 +339,14 @@ class PeerNetwork:
                 if not data:
                     break
                 message = pickle.loads(data)
+                # Handle different message types
                 if message.get('type') == 'GAME_ACTION':
                     # Handle game-specific messages
                     print(f"Received game action: {message}")
+                elif message.get('type') == 'GAME_START':
+                    print(f"Game starting with {message.get('username')}")
+                    # Set opponent username
+                    self.opponent_username = message.get('username')
                 else:
                     print(f"Received message: {message}")
             except Exception as e:

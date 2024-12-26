@@ -136,5 +136,16 @@ def handle_request():
         return jsonify({'success': True})
     return jsonify({'success': False})
 
+@app.route('/check_connection')
+def check_connection():
+    username = session.get('username')
+    peer = peer_instances.get(username)
+    if peer and peer.is_connected:
+        return jsonify({
+            'connected': True,
+            'opponent': getattr(peer, 'opponent_username', None)
+        })
+    return jsonify({'connected': False})
+
 if __name__ == '__main__':
     app.run(debug=True) 

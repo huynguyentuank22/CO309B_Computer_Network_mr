@@ -148,7 +148,19 @@
 
         // Poll for connection requests
         function pollRequests() {
-            fetch('/get_requests')
+            // First check if we're connected
+            fetch('/check_connection')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.connected) {
+                        // If connected, navigate to game page
+                        window.location.href = '/game';
+                        return;
+                    }
+                    
+                    // If not connected, continue polling for requests
+                    return fetch('/get_requests');
+                })
                 .then(response => response.json())
                 .then(requests => {
                     console.log('Received requests:', requests);
