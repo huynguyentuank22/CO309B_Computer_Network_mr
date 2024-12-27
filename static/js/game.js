@@ -359,6 +359,29 @@ class BattleshipGame {
             this.startGame();
         }
     }
+
+    setupExitHandler() {
+        // Handle page unload/exit
+        window.addEventListener('beforeunload', async (e) => {
+            // Cancel the event
+            e.preventDefault();
+            
+            // Send disconnect message to server
+            try {
+                await fetch('/disconnect', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+            } catch (error) {
+                console.error('Error sending disconnect:', error);
+            }
+            
+            // Chrome requires returnValue to be set
+            e.returnValue = '';
+        });
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
