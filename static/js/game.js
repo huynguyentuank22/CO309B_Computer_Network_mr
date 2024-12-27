@@ -357,11 +357,12 @@ class BattleshipGame {
                 console.log('Opponent is ready, waiting for us');
                 document.getElementById('phase-text').textContent = 'Opponent is ready! Place your ships and click Done.';
             } else {
-                console.log('Both players are ready');
-                document.getElementById('phase-text').textContent = 'Both players ready! Starting game...';
+                console.log('We are ready and received opponent ready');
+                document.getElementById('phase-text').textContent = 'Both players ready! Waiting for confirmation...';
             }
-        } else if (status.type === 'GAME_START' && status.both_ready) {
-            console.log('Both players ready, starting countdown');
+        } else if (status.type === 'READY_CONFIRM' || (status.type === 'GAME_START' && status.both_ready)) {
+            console.log('Both players confirmed ready, starting countdown');
+            document.getElementById('phase-text').textContent = 'Both players confirmed! Starting game...';
             this.startCountdown();
         } else if (status.type === 'GAME_START') {
             console.log(`Game starting! ${status.first_player ? 'We go first!' : 'Opponent goes first!'}`);

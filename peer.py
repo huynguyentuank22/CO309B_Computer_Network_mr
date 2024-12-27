@@ -22,8 +22,8 @@ class PeerNetwork:
         self.request_lock = threading.Lock()
         self.opponent_username = None
         self.game_status = None  # To store game status messages
-        self.opponent_ready = False
         self.ready = False
+        self.opponent_ready = False
 
     def get_local_ip(self):
         """Get local IP address."""
@@ -374,20 +374,20 @@ class PeerNetwork:
                     print(f"Opponent ready status: {self.opponent_ready}")
                     print(f"Our ready status: {self.ready}")
                     
-                    # If we're also ready, notify the opponent
+                    # If we're also ready, send confirmation back
                     if self.ready:
-                        print("We're also ready, notifying opponent")
+                        print("We're also ready, sending confirmation")
                         self.send_message({
-                            'type': 'BOTH_READY'
+                            'type': 'READY_CONFIRM',
+                            'username': self.username
                         })
                     
-                    # Update game status for the UI
                     self.game_status = {
                         'type': 'PLAYER_READY',
                         'username': message['username']
                     }
-                elif message.get('type') == 'BOTH_READY':
-                    print("Received confirmation that both players are ready")
+                elif message.get('type') == 'READY_CONFIRM':
+                    print(f"Received ready confirmation from {message['username']}")
                     self.game_status = {
                         'type': 'GAME_START',
                         'both_ready': True
