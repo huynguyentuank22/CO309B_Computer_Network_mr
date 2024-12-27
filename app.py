@@ -229,7 +229,7 @@ def player_ready():
                         'both_ready': True
                     }
         peer.send_message({
-            'type': 'GAME_START',
+            'type': 'READY_CONFIRM',
             'both_ready': True
         })
     else:
