@@ -198,6 +198,7 @@ def player_ready():
     peer = peer_instances.get(username)
     
     print(f"\n=== Player Ready Request ===")
+    print(f"Request data: {request.get_json()}")
     print(f"Username: {username}")
     print(f"Game exists: {game is not None}")
     print(f"Peer exists: {peer is not None}")

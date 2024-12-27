@@ -61,9 +61,7 @@
     <script src="{{ url_for('static', filename='js/game.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const game = new BattleshipGame();
-            // Make game instance globally accessible
-            window.gameInstance = game;
+            window.game = new BattleshipGame();
             console.log('Game initialized:', game);
         });
     </script>

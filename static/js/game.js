@@ -182,7 +182,8 @@ class BattleshipGame {
         }
         console.log('Setting up ready button:', readyBtn);
         readyBtn.style.display = 'none';  // Initially hidden
-        readyBtn.onclick = async () => {
+        readyBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
             console.log('Ready button clicked!');
             alert('Ready button clicked!');
             try {
@@ -191,7 +192,7 @@ class BattleshipGame {
                 console.error('Error handling ready:', error);
                 alert('Error: ' + error.message);
             }
-        };
+        });
     }
 
     async handleReady() {
@@ -203,25 +204,31 @@ class BattleshipGame {
         }
 
         console.log('Sending ready status to opponent...');
-        const response = await fetch('/player_ready', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        console.log('Got response from player_ready:', response);
-        const result = await response.json();
-        console.log('Player ready result:', result);
+        try {
+            const response = await fetch('/player_ready', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ ready: true })
+            });
+            console.log('Got response from player_ready:', response);
+            const result = await response.json();
+            console.log('Player ready result:', result);
 
-        if (result.success) {
-            console.log('Successfully marked as ready');
-            this.isReady = true;
-            document.getElementById('ready-btn').disabled = true;
-            document.getElementById('rotate').disabled = true;
-            document.querySelectorAll('.ships button').forEach(btn => btn.disabled = true);
-            document.getElementById('phase-text').textContent = 'Waiting for opponent...';
-        } else {
-            alert(`Failed to ready up: ${result.message || 'Unknown error'}`);
+            if (result.success) {
+                console.log('Successfully marked as ready');
+                this.isReady = true;
+                document.getElementById('ready-btn').disabled = true;
+                document.getElementById('rotate').disabled = true;
+                document.querySelectorAll('.ships button').forEach(btn => btn.disabled = true);
+                document.getElementById('phase-text').textContent = 'Waiting for opponent...';
+            } else {
+                alert(`Failed to ready up: ${result.message || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Error in handleReady:', error);
+            alert('Failed to send ready status: ' + error.message);
         }
     }
 
@@ -355,5 +362,6 @@ class BattleshipGame {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    new BattleshipGame();
+    window.game = new BattleshipGame();
+    console.log('Game initialized:', window.game);
 }); 
