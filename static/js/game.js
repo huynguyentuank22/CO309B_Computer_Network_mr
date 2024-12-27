@@ -202,7 +202,7 @@ class BattleshipGame {
             alert('Please place all your ships first!');
             return;
         }
-
+        this.isReady = true;
         console.log('Current status - Ready:', this.isReady, 'Opponent Ready:', this.opponentReady);
 
         try {
@@ -221,7 +221,7 @@ class BattleshipGame {
 
             if (result.success) {
                 console.log('Successfully marked as ready');
-                this.isReady = true;
+                // this.isReady = true;
                 document.getElementById('ready-btn').disabled = true;
                 document.getElementById('rotate').disabled = true;
                 document.querySelectorAll('.ships button').forEach(btn => btn.disabled = true);

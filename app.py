@@ -212,33 +212,22 @@ def player_ready():
     peer.ready = True  # Set our ready status in peer
     
     # Notify opponent
-    # if peer.is_connected:
-    #     print(f"Notifying opponent {peer.opponent_username} that {username} is ready")
-    #     peer.send_message({
-    #         'type': 'PLAYER_READY',
-    #         'username': username
-    #     })
-    
-    # Check if both players are ready
-    both_ready = peer.ready and peer.opponent_ready
-    print(f"Both players ready: {both_ready}")
-
-    if peer.is_connected and both_ready:
-        peer.game_status = {
-                        'type': 'GAME_START',
-                        'both_ready': True
-                    }
-        peer.send_message({
-            'type': 'READY_CONFIRM',
-            'both_ready': True
-        })
-    else:
+    if peer.is_connected:
         print(f"Notifying opponent {peer.opponent_username} that {username} is ready")
         peer.send_message({
             'type': 'PLAYER_READY',
             'username': username
         })
-
+    
+    # Check if both players are ready
+    both_ready = peer.ready and peer.opponent_ready
+    print(f"Both players ready: {both_ready}")
+    if both_ready:
+        peer.game_status = {
+                        'type': 'GAME_START',
+                        'both_ready': True
+                    }
+    
     return jsonify({
         'success': True,
         'both_ready': both_ready
