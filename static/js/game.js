@@ -385,31 +385,21 @@ class BattleshipGame {
     handleGameStatus(status) {
         console.log('Received game status:', status);
         if (status.type === 'PLAYER_READY') {
-            // Opponent is ready
-            if (!this.isReady) {
+            this.opponentReady = true;
+            console.log('Updated opponent ready status:', this.opponentReady);
+            
+            if (this.isReady && this.opponentReady && !this.countdownStarted) {
+                console.log('Both players ready, starting countdown');
+                document.getElementById('phase-text').textContent = 'Both players ready! Starting game...';
+                this.startCountdown();
+            } else if (!this.isReady) {
                 console.log('Opponent is ready, waiting for us');
                 document.getElementById('phase-text').textContent = 'Opponent is ready! Place your ships and click Done.';
-                this.opponentReady = true;
-                console.log('Updated opponent ready status:', this.opponentReady);
-            } else {
-                console.log('We are ready and received opponent ready');
-                document.getElementById('phase-text').textContent = 'Both players ready! Starting game...';
-                console.log('Both players ready, starting countdown');
-                this.startCountdown();
             }
         } else if (status.type === 'GAME_START') {
-            console.log('Game starting!');
-            if (this.gameStarted) {
-                console.log('Game already started, ignoring');
-                return;
-            }
-            if (status.first_player) {
-                console.log('We go first!');
-                this.myTurn = true;
-            } else {
-                console.log('Opponent goes first!');
-                this.myTurn = false;
-            }
+            if (this.gameStarted) return;
+            
+            this.myTurn = status.first_player;
             this.startGame();
         }
     }
