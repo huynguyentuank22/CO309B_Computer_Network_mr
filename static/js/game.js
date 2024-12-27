@@ -5,6 +5,7 @@ class BattleshipGame {
         this.orientation = 'horizontal';
         this.isPlacingShip = false;
         this.isReady = false;
+        this.opponentReady = false;
         this.gameStarted = false;
         this.myTurn = false;
         
@@ -222,12 +223,13 @@ class BattleshipGame {
                 document.getElementById('ready-btn').disabled = true;
                 document.getElementById('rotate').disabled = true;
                 document.querySelectorAll('.ships button').forEach(btn => btn.disabled = true);
-                document.getElementById('phase-text').textContent = 'Waiting for opponent...';
                 
-                // Start countdown if both players are ready
-                if (result.both_ready) {
-                    console.log('Both players ready, starting countdown');
+                if (this.opponentReady) {
+                    console.log('Opponent was already ready, starting game');
+                    document.getElementById('phase-text').textContent = 'Both players ready! Starting game...';
                     this.startCountdown();
+                } else {
+                    document.getElementById('phase-text').textContent = 'Waiting for opponent...';
                 }
             } else {
                 alert(`Failed to ready up: ${result.message || 'Unknown error'}`);
@@ -354,14 +356,12 @@ class BattleshipGame {
             if (!this.isReady) {
                 console.log('Opponent is ready, waiting for us');
                 document.getElementById('phase-text').textContent = 'Opponent is ready! Place your ships and click Done.';
+                this.opponentReady = true;
             } else {
                 console.log('We are ready and received opponent ready');
                 document.getElementById('phase-text').textContent = 'Both players ready! Starting game...';
+                this.startCountdown();
             }
-        } else if (status.type === 'GAME_START' && status.both_ready) {
-            console.log('Both players confirmed ready, starting countdown');
-            document.getElementById('phase-text').textContent = 'Both players confirmed! Starting game...';
-            this.startCountdown();
         }
     }
 
