@@ -275,26 +275,41 @@ class BattleshipGame {
             } else {
                 clearInterval(countInterval);
                 countdownDiv.style.display = 'none';
-                // After countdown, send GAME_START message
+                // After countdown, send GAME_START message and start game
                 fetch('/start_game', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     }
+                }).then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        console.log('Game starting, first player:', result.first_player);
+                        this.myTurn = result.first_player;
+                        this.startGame();
+                    }
+                }).catch(error => {
+                    console.error('Error starting game:', error);
                 });
             }
         }, 1000);
     }
 
     startGame() {
-        console.log('Starting game');
+        console.log('Starting game, myTurn:', this.myTurn);
         this.gameStarted = true;
         document.getElementById('ship-placement').style.display = 'none';
         document.getElementById('phase-text').textContent = 'Battle Phase';
+        document.getElementById('countdown').style.display = 'none';
         this.updateTurnIndicator();
+        
+        // Enable/disable opponent board based on turn
+        this.opponentBoard.style.cursor = this.myTurn ? 'pointer' : 'not-allowed';
+        this.opponentBoard.style.opacity = this.myTurn ? '1' : '0.7';
     }
 
     updateTurnIndicator() {
+        console.log('Updating turn indicator, myTurn:', this.myTurn);
         const indicator = document.getElementById('turn-indicator');
         indicator.textContent = this.myTurn ? 'Your Turn' : "Opponent's Turn";
         indicator.className = this.myTurn ? 'my-turn' : 'opponent-turn';
@@ -384,6 +399,10 @@ class BattleshipGame {
             }
         } else if (status.type === 'GAME_START') {
             console.log('Game starting!');
+            if (this.gameStarted) {
+                console.log('Game already started, ignoring');
+                return;
+            }
             if (status.first_player) {
                 console.log('We go first!');
                 this.myTurn = true;
