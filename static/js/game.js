@@ -182,7 +182,7 @@ class BattleshipGame {
         }
         console.log('Setting up ready button:', readyBtn);
         readyBtn.style.display = 'none';  // Initially hidden
-        readyBtn.onclick = async () => {
+        readyBtn.addEventListener('click', async () => {
             console.log('Ready button clicked!');
             alert('Ready button clicked!');
             try {
@@ -191,7 +191,7 @@ class BattleshipGame {
                 console.error('Error handling ready:', error);
                 alert('Error: ' + error.message);
             }
-        };
+        });
     }
 
     async handleReady() {
