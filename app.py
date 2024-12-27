@@ -198,7 +198,6 @@ def player_ready():
     peer = peer_instances.get(username)
     
     print(f"\n=== Player Ready Request ===")
-    print(f"Request data: {request.get_json()}")
     print(f"Username: {username}")
     print(f"Game exists: {game is not None}")
     print(f"Peer exists: {peer is not None}")
@@ -215,6 +214,7 @@ def player_ready():
     
     print(f"Player {username} is ready")
     game.ready = True
+    peer.ready = True  # Set our ready status in peer
     
     # Notify opponent
     if peer.is_connected:
@@ -226,29 +226,26 @@ def player_ready():
     
     # Check if both players are ready
     opponent_game = game_instances.get(peer.opponent_username)
-    print(f"Opponent game exists: {opponent_game is not None}")
-    print(f"Opponent ready: {opponent_game.ready if opponent_game else False}")
+    both_ready = peer.opponent_ready and peer.ready
+    print(f"Both players ready: {both_ready}")
     
-    both_ready = False
-    if opponent_game:
-        if opponent_game.ready:
-            both_ready = True
-            print("Both players are ready!")
-            # Start the game
-            game.game_started = True
-            opponent_game.game_started = True
-            
-            # Randomly choose who goes first
-            import random
-            game.my_turn = random.choice([True, False])
-            opponent_game.my_turn = not game.my_turn
-            print(f"First player: {username if game.my_turn else peer.opponent_username}")
-            
-            # Notify opponent of turn order
-            peer.send_message({
-                'type': 'GAME_START',
-                'first_player': username if game.my_turn else peer.opponent_username
-            })
+    if both_ready and opponent_game:  # Check if opponent_game exists
+        print("Both players are ready!")
+        # Start the game
+        game.game_started = True
+        opponent_game.game_started = True
+        
+        # Randomly choose who goes first
+        import random
+        game.my_turn = random.choice([True, False])
+        opponent_game.my_turn = not game.my_turn
+        print(f"First player: {username if game.my_turn else peer.opponent_username}")
+        
+        # Notify opponent of turn order
+        peer.send_message({
+            'type': 'GAME_START',
+            'first_player': username if game.my_turn else peer.opponent_username
+        })
     
     print(f"Returning: success=True, both_ready={both_ready}")
     return jsonify({

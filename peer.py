@@ -374,21 +374,26 @@ class PeerNetwork:
                     print(f"Opponent ready status: {self.opponent_ready}")
                     print(f"Our ready status: {self.ready}")
                     
-                    # Check if both players are ready
-                    if self.ready and self.opponent_ready:
-                        print("Both players are ready, starting game")
-                        self.game_status = {
-                            'type': 'GAME_START',
-                            'both_ready': True
-                        }
-                    else:
-                        self.game_status = {
-                            'type': 'PLAYER_READY',
-                            'username': message['username']
-                        }
+                    # If we're also ready, notify the opponent
+                    if self.ready:
+                        print("We're also ready, notifying opponent")
+                        self.send_message({
+                            'type': 'BOTH_READY'
+                        })
+                    
+                    # Update game status for the UI
+                    self.game_status = {
+                        'type': 'PLAYER_READY',
+                        'username': message['username']
+                    }
+                elif message.get('type') == 'BOTH_READY':
+                    print("Received confirmation that both players are ready")
+                    self.game_status = {
+                        'type': 'GAME_START',
+                        'both_ready': True
+                    }
                 elif message.get('type') == 'GAME_START':
                     print(f"Game starting, first player: {message['first_player']}")
-                    # Store the game start status
                     self.game_status = {
                         'type': 'GAME_START',
                         'first_player': message['first_player'] == self.username

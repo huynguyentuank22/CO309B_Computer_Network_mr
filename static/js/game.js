@@ -212,6 +212,9 @@ class BattleshipGame {
                 },
                 body: JSON.stringify({ ready: true })
             });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
             console.log('Got response from player_ready:', response);
             const result = await response.json();
             console.log('Player ready result:', result);
@@ -233,7 +236,7 @@ class BattleshipGame {
             }
         } catch (error) {
             console.error('Error in handleReady:', error);
-            alert('Failed to send ready status: ' + error.message);
+            alert('Failed to ready up. Please try again.');
         }
     }
 
