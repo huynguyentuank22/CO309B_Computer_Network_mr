@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify, session, redirect
 from game import BattleshipGame
 from peer import PeerNetwork
 import threading
+import random
 
 app = Flask(__name__)
 app.secret_key = 'battleship_secret_key'  # Required for session
@@ -238,6 +239,29 @@ def receive_attack():
     
     result = game.receive_attack(data['x'], data['y'])
     return jsonify(result)
+
+@app.route('/start_game', methods=['POST'])
+def start_game():
+    username = session.get('username')
+    game = game_instances.get(username)
+    peer = peer_instances.get(username)
+    
+    if not game or not peer:
+        return jsonify({'success': False}), 404
+        
+    # Randomly choose who goes first
+    game.my_turn = random.choice([True, False])
+    
+    # Notify opponent
+    peer.send_message({
+        'type': 'GAME_START',
+        'first_player': game.my_turn
+    })
+    
+    return jsonify({
+        'success': True,
+        'first_player': game.my_turn
+    })
 
 if __name__ == '__main__':
     app.run(debug=True) 

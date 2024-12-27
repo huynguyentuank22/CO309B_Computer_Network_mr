@@ -275,7 +275,13 @@ class BattleshipGame {
             } else {
                 clearInterval(countInterval);
                 countdownDiv.style.display = 'none';
-                this.startGame();
+                // After countdown, send GAME_START message
+                fetch('/start_game', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
             }
         }, 1000);
     }
@@ -376,6 +382,16 @@ class BattleshipGame {
                 console.log('Both players ready, starting countdown');
                 this.startCountdown();
             }
+        } else if (status.type === 'GAME_START') {
+            console.log('Game starting!');
+            if (status.first_player) {
+                console.log('We go first!');
+                this.myTurn = true;
+            } else {
+                console.log('Opponent goes first!');
+                this.myTurn = false;
+            }
+            this.startGame();
         }
     }
 
