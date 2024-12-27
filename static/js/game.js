@@ -195,13 +195,13 @@ class BattleshipGame {
     }
 
     async handleReady() {
-        alert('Checking if all ships are placed...');
+        console.log('Checking if all ships are placed...');
         if (!this.isPlacementComplete()) {
             alert('Please place all your ships first!');
             return;
         }
 
-        alert('You are ready! Notifying opponent...');
+        console.log('Sending ready status to opponent...');
         const response = await fetch('/player_ready', {
             method: 'POST',
             headers: {
@@ -213,17 +213,12 @@ class BattleshipGame {
         console.log('Player ready result:', result);
 
         if (result.success) {
-            alert('Successfully marked as ready. Waiting for opponent...');
+            console.log('Successfully marked as ready');
             this.isReady = true;
             document.getElementById('ready-btn').disabled = true;
             document.getElementById('rotate').disabled = true;
             document.querySelectorAll('.ships button').forEach(btn => btn.disabled = true);
             document.getElementById('phase-text').textContent = 'Waiting for opponent...';
-            
-            if (result.both_ready) {
-                alert('Both players are ready! Starting countdown...');
-                this.startCountdown();
-            }
         } else {
             alert(`Failed to ready up: ${result.message || 'Unknown error'}`);
         }
@@ -343,17 +338,15 @@ class BattleshipGame {
         if (status.type === 'PLAYER_READY') {
             // Opponent is ready
             if (!this.isReady) {
-                alert(`Opponent is ready! Please finish placing your ships and click Done when ready.`);
+                console.log('Opponent is ready, waiting for us');
+                document.getElementById('phase-text').textContent = 'Opponent is ready! Place your ships and click Done.';
             } else {
-                alert('Opponent is ready! Game will start soon...');
-            }
-            document.getElementById('phase-text').textContent = 'Opponent is ready!';
-            if (this.isReady) {
-                alert('Both players ready, starting countdown...');
+                console.log('Both players are ready');
+                document.getElementById('phase-text').textContent = 'Both players ready! Starting game...';
                 this.startCountdown();
             }
         } else if (status.type === 'GAME_START') {
-            alert(`Game starting! ${status.first_player ? 'You go first!' : 'Opponent goes first!'}`);
+            console.log(`Game starting! ${status.first_player ? 'We go first!' : 'Opponent goes first!'}`);
             this.myTurn = status.first_player === true;
             this.startGame();
         }
