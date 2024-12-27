@@ -199,17 +199,11 @@ def player_ready():
     
     print(f"\n=== Player Ready Request ===")
     print(f"Username: {username}")
-    print(f"Game exists: {game is not None}")
-    print(f"Peer exists: {peer is not None}")
-    print(f"Peer connected: {peer.is_connected if peer else False}")
-    print(f"Opponent username: {peer.opponent_username if peer else None}")
     
     if not game or not peer:
-        print(f"Game or peer not found for {username}")
         return jsonify({'success': False}), 404
     
     if not game.is_placement_complete():
-        print(f"Not all ships placed for {username}")
         return jsonify({'success': False, 'message': 'Not all ships placed'}), 400
     
     print(f"Player {username} is ready")
@@ -224,9 +218,10 @@ def player_ready():
             'username': username
         })
     
-    both_ready = False  # Will be set to true when confirmation is received
+    # Check if both players are ready
+    both_ready = peer.ready and peer.opponent_ready
+    print(f"Both players ready: {both_ready}")
     
-    print(f"Returning: success=True, both_ready={both_ready}")
     return jsonify({
         'success': True,
         'both_ready': both_ready

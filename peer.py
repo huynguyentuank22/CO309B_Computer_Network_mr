@@ -22,8 +22,8 @@ class PeerNetwork:
         self.request_lock = threading.Lock()
         self.opponent_username = None
         self.game_status = None  # To store game status messages
-        self.ready = False
-        self.opponent_ready = False
+        self.ready = False  # My ready status
+        self.opponent_ready = False  # Opponent's ready status
 
     def get_local_ip(self):
         """Get local IP address."""
@@ -369,23 +369,23 @@ class PeerNetwork:
                     self.opponent_username = message['username']
                 elif message.get('type') == 'PLAYER_READY':
                     print(f"Player {message['username']} is ready")
-                    # Store opponent's ready status
+                    # Update opponent's ready status
                     self.opponent_ready = True
-                    print(f"Opponent ready status: {self.opponent_ready}")
-                    print(f"Our ready status: {self.ready}")
+                    print(f"Opponent ready: {self.opponent_ready}, Our ready: {self.ready}")
                     
-                    # If we're also ready, send confirmation back
+                    # If we're also ready, notify that both are ready
                     if self.ready:
-                        print("We're also ready, sending confirmation")
-                        self.send_message({
-                            'type': 'READY_CONFIRM',
-                            'username': self.username
-                        })
-                    
-                    self.game_status = {
-                        'type': 'PLAYER_READY',
-                        'username': message['username']
-                    }
+                        print("Both players are ready, starting game")
+                        self.game_status = {
+                            'type': 'GAME_START',
+                            'both_ready': True
+                        }
+                    else:
+                        # Just update UI to show opponent is ready
+                        self.game_status = {
+                            'type': 'PLAYER_READY',
+                            'username': message['username']
+                        }
                 elif message.get('type') == 'READY_CONFIRM':
                     print(f"Received ready confirmation from {message['username']}")
                     self.game_status = {
