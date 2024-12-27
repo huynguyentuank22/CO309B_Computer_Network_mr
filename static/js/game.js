@@ -223,6 +223,12 @@ class BattleshipGame {
                 document.getElementById('rotate').disabled = true;
                 document.querySelectorAll('.ships button').forEach(btn => btn.disabled = true);
                 document.getElementById('phase-text').textContent = 'Waiting for opponent...';
+                
+                // Start countdown if both players are ready
+                if (result.both_ready) {
+                    console.log('Both players ready, starting countdown');
+                    this.startCountdown();
+                }
             } else {
                 alert(`Failed to ready up: ${result.message || 'Unknown error'}`);
             }
@@ -351,7 +357,6 @@ class BattleshipGame {
             } else {
                 console.log('We are ready and received opponent ready');
                 document.getElementById('phase-text').textContent = 'Both players ready! Starting game...';
-                this.startCountdown();
             }
         } else if (status.type === 'GAME_START' && status.both_ready) {
             console.log('Both players confirmed ready, starting countdown');

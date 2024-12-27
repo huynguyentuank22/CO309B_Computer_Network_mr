@@ -369,19 +369,17 @@ class PeerNetwork:
                     self.opponent_username = message['username']
                 elif message.get('type') == 'PLAYER_READY':
                     print(f"Player {message['username']} is ready")
-                    # Update opponent's ready status
                     self.opponent_ready = True
-                    print(f"Opponent ready: {self.opponent_ready}, Our ready: {self.ready}")
+                    print(f"Our ready: {self.ready}, Opponent ready: {self.opponent_ready}")
                     
-                    # If we're also ready, notify that both are ready
-                    if self.ready:
-                        print("Both players are ready, starting game")
+                    # If both players are ready, update game status
+                    if self.ready and self.opponent_ready:
+                        print("Both players are ready, updating game status")
                         self.game_status = {
                             'type': 'GAME_START',
                             'both_ready': True
                         }
                     else:
-                        # Just update UI to show opponent is ready
                         self.game_status = {
                             'type': 'PLAYER_READY',
                             'username': message['username']
