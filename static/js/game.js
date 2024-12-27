@@ -182,7 +182,7 @@ class BattleshipGame {
         }
         console.log('Setting up ready button:', readyBtn);
         readyBtn.style.display = 'none';  // Initially hidden
-        readyBtn.addEventListener('click', async () => {
+        readyBtn.onclick = async () => {
             console.log('Ready button clicked!');
             alert('Ready button clicked!');
             try {
@@ -191,10 +191,11 @@ class BattleshipGame {
                 console.error('Error handling ready:', error);
                 alert('Error: ' + error.message);
             }
-        });
+        };
     }
 
     async handleReady() {
+        console.log('handleReady called');
         console.log('Checking if all ships are placed...');
         if (!this.isPlacementComplete()) {
             alert('Please place all your ships first!');
@@ -208,7 +209,7 @@ class BattleshipGame {
                 'Content-Type': 'application/json'
             }
         });
-        console.log('Player ready response:', response);
+        console.log('Got response from player_ready:', response);
         const result = await response.json();
         console.log('Player ready result:', result);
 
