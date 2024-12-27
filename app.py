@@ -222,6 +222,11 @@ def player_ready():
     # Check if both players are ready
     both_ready = peer.ready and peer.opponent_ready
     print(f"Both players ready: {both_ready}")
+    if both_ready:
+        peer.game_status = {
+                        'type': 'GAME_START',
+                        'both_ready': True
+                    }
     
     return jsonify({
         'success': True,
