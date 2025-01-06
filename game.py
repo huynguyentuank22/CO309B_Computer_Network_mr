@@ -138,6 +138,14 @@ class UltimateTicTacToe:
         
         self.my_turn = True  # It's our turn after opponent's move
 
+    
+        return {
+            'sub_board_result': sub_board_result,
+            'game_over': game_result is not None,
+            'winner': game_result if game_result and game_result != 'draw' else None,
+            'is_draw': game_result == 'draw'
+        }
+
     # can comment
     def print_board(self):
         """Print the current state of the ultimate tic-tac-toe board."""
