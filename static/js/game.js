@@ -61,9 +61,11 @@ class UltimateTicTacToeGame {
     }
 
     async handleMove(event) {
-        if (!this.myTurn) return;
+        if (!this.myTurn || !this.gameStarted) return;
         
         const cell = event.target;
+        if (cell.textContent) return; // Cell already taken
+        
         const mainRow = parseInt(cell.dataset.mainRow);
         const mainCol = parseInt(cell.dataset.mainCol);
         const subRow = parseInt(cell.dataset.subRow);
@@ -96,7 +98,7 @@ class UltimateTicTacToeGame {
             if (result.game_over) {
                 this.handleGameOver(this.symbol);
             } else {
-                this.currentBoard = result.next_board;
+                this.currentBoard = [subRow, subCol];
                 this.highlightPlayableBoard();
             }
         }
@@ -150,6 +152,12 @@ class UltimateTicTacToeGame {
                 this.currentBoard = [status.sub_row, status.sub_col];
                 this.highlightPlayableBoard();
             }
+        } else if (status.type === 'GAME_START') {
+            this.gameStarted = true;
+            this.myTurn = status.first_player;
+            this.symbol = this.myTurn ? 'X' : 'O';
+            this.updateStatus();
+            this.highlightPlayableBoard();
         }
     }
 

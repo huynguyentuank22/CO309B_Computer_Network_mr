@@ -140,15 +140,14 @@ def handle_request():
             my_game = game_instances.get(username)
             
             if opponent_game and my_game:
-                # Set up both games
-                is_first = random.choice([True, False])
-                my_game.start_game(is_first)
+                # Accepting player goes first
+                my_game.start_game(True)  # Accepting player is first
                 
-                # Notify opponent through peer connection
+                # Notify opponent (broadcasting player) they go second
                 peer.send_message({
                     'type': 'GAME_START',
-                    'first_player': not is_first,  # Opposite for opponent
-                    'opponent': username  # Send accepting player's username
+                    'first_player': False,  # Broadcasting player goes second
+                    'opponent': username
                 })
             
             return jsonify({'success': True})
@@ -281,6 +280,9 @@ def make_move():
     if not game:
         return jsonify({'valid': False, 'message': 'Game not found'}), 404
     
+    if not game.my_turn:
+        return jsonify({'valid': False, 'message': 'Not your turn'})
+    
     result = game.make_move(
         data['main_row'],
         data['main_col'],
@@ -297,6 +299,8 @@ def make_move():
             'sub_row': data['sub_row'],
             'sub_col': data['sub_col']
         })
+        # Update turn
+        game.my_turn = False
     
     return jsonify(result)
 
