@@ -365,13 +365,14 @@ class PeerNetwork:
                 
                 if message.get('type') == 'MOVE':
                     print(f"Received move: {message}")
-                    # Update game state through Flask route
-                    requests.post('http://localhost:5000/receive_move', json={
+                    # Store the move in game_status for the frontend to handle
+                    self.game_status = {
+                        'type': 'MOVE',
                         'main_row': message['main_row'],
                         'main_col': message['main_col'],
                         'sub_row': message['sub_row'],
                         'sub_col': message['sub_col']
-                    })
+                    }
                 elif message.get('type') == 'GAME_START':
                     print(f"Game starting, first player: {message.get('first_player')}")
                     self.game_status = {
