@@ -114,7 +114,16 @@ class UltimateTicTacToeGame {
                 return;
             }
             
-            this.currentBoard = [subRow, subCol];
+            // Update current board based on target board state
+            const targetSubBoard = document.querySelector(
+                `.sub-board[data-row="${subRow}"][data-col="${subCol}"]`
+            );
+            if (targetSubBoard.classList.contains('won')) {
+                this.currentBoard = null;  // Can play anywhere
+            } else {
+                this.currentBoard = [subRow, subCol];
+            }
+            
             this.highlightPlayableBoard();
         }
     }
@@ -174,7 +183,7 @@ class UltimateTicTacToeGame {
                 this.myTurn = true;
                 this.updateStatus();
                 
-                // Check if sub-board is won
+                // Handle sub-board result
                 if (status.sub_board_result) {
                     this.handleSubBoardResult(
                         status.main_row,
@@ -183,7 +192,26 @@ class UltimateTicTacToeGame {
                     );
                 }
                 
-                this.currentBoard = [status.sub_row, status.sub_col];
+                // Handle game over
+                if (status.game_over) {
+                    if (status.is_draw) {
+                        this.handleGameOver('draw');
+                    } else {
+                        this.handleGameOver(status.winner);
+                    }
+                    return;
+                }
+                
+                // Update current board based on target board state
+                const targetSubBoard = document.querySelector(
+                    `.sub-board[data-row="${status.sub_row}"][data-col="${status.sub_col}"]`
+                );
+                if (targetSubBoard.classList.contains('won')) {
+                    this.currentBoard = null;  // Can play anywhere
+                } else {
+                    this.currentBoard = [status.sub_row, status.sub_col];
+                }
+                
                 this.highlightPlayableBoard();
             }
         } else if (status.type === 'GAME_START') {
