@@ -1,434 +1,234 @@
-class BattleshipGame {
+class UltimateTicTacToeGame {
     constructor() {
-        this.boardSize = 10;
-        this.currentShip = null;
-        this.orientation = 'horizontal';
-        this.isPlacingShip = false;
+        this.currentBoard = null;  // Which sub-board to play in (null means any)
         this.isReady = false;
         this.opponentReady = false;
         this.gameStarted = false;
         this.myTurn = false;
+        this.symbol = null;  // 'X' or 'O'
         
-        this.setupBoards();
-        this.setupControls();
-        this.setupPreview();
-        this.startConnectionCheck();
-        this.setupExitHandler();
+        this.setupBoard();
         this.setupReadyButton();
+        this.startConnectionCheck();
     }
 
-    setupBoards() {
-        this.myBoard = document.getElementById('my-board');
-        this.opponentBoard = document.getElementById('opponent-board');
+    setupBoard() {
+        const board = document.getElementById('gameBoard');
+        board.innerHTML = '';
         
-        // Add event listeners to cells
-        this.myBoard.querySelectorAll('.cell').forEach(cell => {
-            const x = parseInt(cell.dataset.x);
-            const y = parseInt(cell.dataset.y);
-            cell.addEventListener('click', () => this.handleMyBoardClick(x, y));
-        });
-        
-        this.opponentBoard.querySelectorAll('.cell').forEach(cell => {
-            const x = parseInt(cell.dataset.x);
-            const y = parseInt(cell.dataset.y);
-            cell.addEventListener('click', () => this.handleOpponentBoardClick(x, y));
-        });
-    }
-
-    setupControls() {
-        const shipButtons = document.querySelectorAll('.ships button');
-        shipButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                this.currentShip = button.dataset.ship;
-                this.isPlacingShip = true;
-                shipButtons.forEach(b => b.classList.remove('selected'));
-                button.classList.add('selected');
-            });
-        });
-
-        document.getElementById('rotate').addEventListener('click', () => {
-            this.orientation = this.orientation === 'horizontal' ? 'vertical' : 'horizontal';
-            if (this.isPlacingShip && this.lastPreviewCell) {
-                this.showShipPreview(this.lastPreviewCell);
-            }
-        });
-    }
-
-    setupPreview() {
-        const cells = this.myBoard.querySelectorAll('.cell');
-        cells.forEach(cell => {
-            cell.addEventListener('mouseover', () => {
-                if (this.isPlacingShip && this.currentShip) {
-                    this.showShipPreview(cell);
+        // Create 3x3 grid of sub-boards
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                const subBoard = document.createElement('div');
+                subBoard.className = 'sub-board';
+                subBoard.dataset.row = i;
+                subBoard.dataset.col = j;
+                
+                // Create 3x3 grid of cells for each sub-board
+                for (let m = 0; m < 3; m++) {
+                    for (let n = 0; n < 3; n++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        cell.dataset.mainRow = i;
+                        cell.dataset.mainCol = j;
+                        cell.dataset.subRow = m;
+                        cell.dataset.subCol = n;
+                        cell.addEventListener('click', (e) => this.handleMove(e));
+                        subBoard.appendChild(cell);
+                    }
                 }
-            });
-            
-            cell.addEventListener('mouseout', () => {
-                this.clearPreview();
-            });
-        });
-    }
-
-    showShipPreview(cell) {
-        this.clearPreview();
-        this.lastPreviewCell = cell;
-        
-        const x = parseInt(cell.dataset.x);
-        const y = parseInt(cell.dataset.y);
-        const length = parseInt(document.querySelector(`[data-ship="${this.currentShip}"]`).dataset.length);
-        
-        const previewCells = [];
-        let isValid = true;
-        
-        for (let i = 0; i < length; i++) {
-            const cellX = this.orientation === 'horizontal' ? x + i : x;
-            const cellY = this.orientation === 'horizontal' ? y : y + i;
-            
-            if (cellX >= this.boardSize || cellY >= this.boardSize) {
-                isValid = false;
-                break;
+                
+                board.appendChild(subBoard);
             }
-            
-            const previewCell = this.myBoard.querySelector(`[data-x="${cellX}"][data-y="${cellY}"]`);
-            if (previewCell.classList.contains('ship')) {
-                isValid = false;
-                break;
-            }
-            
-            previewCells.push(previewCell);
-        }
-        
-        previewCells.forEach(cell => {
-            cell.classList.add(isValid ? 'preview-valid' : 'preview-invalid');
-        });
-    }
-
-    clearPreview() {
-        const previewCells = this.myBoard.querySelectorAll('.preview-valid, .preview-invalid');
-        previewCells.forEach(cell => {
-            cell.classList.remove('preview-valid', 'preview-invalid');
-        });
-    }
-
-    async handleMyBoardClick(x, y) {
-        if (!this.currentShip) return;
-        
-        const response = await fetch('/place_ship', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                ship: this.currentShip,
-                x: x,
-                y: y,
-                orientation: this.orientation
-            })
-        });
-        
-        const result = await response.json();
-        if (result.success) {
-            this.placeShipOnBoard(x, y);
-            document.querySelector(`[data-ship="${this.currentShip}"]`).disabled = true;
-            this.currentShip = null;
-            
-            // Check if all ships are placed
-            if (this.isPlacementComplete()) {
-                console.log('All ships placed, showing ready button');
-                const readyBtn = document.getElementById('ready-btn');
-                if (readyBtn) {
-                    readyBtn.style.display = 'block';
-                    console.log('Ready button is now visible');
-                } else {
-                    console.error('Ready button not found when trying to show it');
-                }
-            }
-        }
-    }
-
-    async handleOpponentBoardClick(x, y) {
-        if (!this.gameStarted || !this.myTurn) return;
-
-        const response = await fetch('/fire', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ x, y })
-        });
-        
-        const result = await response.json();
-        if (result.valid) {
-            this.myTurn = false;
-            this.updateTurnIndicator();
-        }
-    }
-
-    placeShipOnBoard(x, y) {
-        const length = parseInt(document.querySelector(`[data-ship="${this.currentShip}"]`).dataset.length);
-        
-        for (let i = 0; i < length; i++) {
-            const cellX = this.orientation === 'horizontal' ? x + i : x;
-            const cellY = this.orientation === 'horizontal' ? y : y + i;
-            const cell = this.myBoard.querySelector(`[data-x="${cellX}"][data-y="${cellY}"]`);
-            cell.classList.add('ship');
         }
     }
 
     setupReadyButton() {
         const readyBtn = document.getElementById('ready-btn');
-        if (!readyBtn) {
-            console.error('Ready button not found!');
-            return;
-        }
-        console.log('Setting up ready button:', readyBtn);
-        readyBtn.style.display = 'none';  // Initially hidden
-        readyBtn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            console.log('Ready button clicked!');
-            alert('Ready button clicked!');
+        readyBtn.addEventListener('click', async () => {
             try {
-                await this.handleReady();
+                const response = await fetch('/player_ready', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ ready: true })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    this.isReady = true;
+                    readyBtn.disabled = true;
+                    
+                    if (result.both_ready) {
+                        this.startCountdown();
+                    } else {
+                        document.getElementById('status').textContent = 'Waiting for opponent...';
+                    }
+                }
             } catch (error) {
-                console.error('Error handling ready:', error);
-                alert('Error: ' + error.message);
+                console.error('Error marking ready:', error);
             }
         });
     }
 
-    async handleReady() {
-        console.log('handleReady called');
-        if (!this.isPlacementComplete()) {
-            alert('Please place all your ships first!');
+    async handleMove(event) {
+        if (!this.gameStarted || !this.myTurn) return;
+        
+        const cell = event.target;
+        const mainRow = parseInt(cell.dataset.mainRow);
+        const mainCol = parseInt(cell.dataset.mainCol);
+        const subRow = parseInt(cell.dataset.subRow);
+        const subCol = parseInt(cell.dataset.subCol);
+        
+        // Check if move is valid for current sub-board
+        if (this.currentBoard && 
+            (mainRow !== this.currentBoard[0] || mainCol !== this.currentBoard[1])) {
             return;
         }
-        this.isReady = true;
-        console.log('Current status - Ready:', this.isReady, 'Opponent Ready:', this.opponentReady);
-
-        try {
-            const response = await fetch('/player_ready', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ ready: true })
-            });
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const result = await response.json();
-            console.log('Player ready result:', result);
-
-            if (result.success) {
-                console.log('Successfully marked as ready');
-                // this.isReady = true;
-                document.getElementById('ready-btn').disabled = true;
-                document.getElementById('rotate').disabled = true;
-                document.querySelectorAll('.ships button').forEach(btn => btn.disabled = true);
-                
-                // Check if opponent was already ready
-                if (this.opponentReady) {
-                    console.log('Opponent was already ready, starting game');
-                    document.getElementById('phase-text').textContent = 'Both players ready! Starting game...';
-                    setTimeout(() => this.startCountdown(), 1000);  // Small delay before countdown
-                } else {
-                    console.log('Waiting for opponent to be ready');
-                    document.getElementById('phase-text').textContent = 'Waiting for opponent...';
-                }
+        
+        // Make move
+        const response = await fetch('/make_move', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                main_row: mainRow,
+                main_col: mainCol,
+                sub_row: subRow,
+                sub_col: subCol
+            })
+        });
+        
+        const result = await response.json();
+        if (result.valid) {
+            cell.textContent = this.symbol;
+            this.myTurn = false;
+            this.updateStatus();
+            
+            if (result.game_over) {
+                this.handleGameOver(result.winner);
             } else {
-                alert(`Failed to ready up: ${result.message || 'Unknown error'}`);
-            }
-        } catch (error) {
-            console.error('Error in handleReady:', error);
-            // More specific error message
-            if (error.message.includes('status 0')) {
-                alert('Connection error. Please check your internet connection.');
-            } else {
-                alert('Failed to ready up. Please try again.');
+                this.currentBoard = result.next_board;
+                this.highlightPlayableBoard();
             }
         }
     }
 
-    isPlacementComplete() {
-        const placedShips = document.querySelectorAll('.ships button[disabled]');
-        const count = placedShips.length;
-        alert(`Checking ship placement: ${count}/5 ships placed`);
-        return count === 5;  // All 5 ships should be placed
+    highlightPlayableBoard() {
+        // Remove previous highlights
+        document.querySelectorAll('.cell').forEach(cell => {
+            cell.classList.remove('playable');
+        });
+        
+        // Highlight new playable cells
+        if (this.currentBoard) {
+            const [row, col] = this.currentBoard;
+            document.querySelectorAll(
+                `.cell[data-main-row="${row}"][data-main-col="${col}"]`
+            ).forEach(cell => {
+                if (!cell.textContent) {  // Only highlight empty cells
+                    cell.classList.add('playable');
+                }
+            });
+        } else {
+            // If can play anywhere, highlight all empty cells
+            document.querySelectorAll('.cell').forEach(cell => {
+                if (!cell.textContent) {
+                    cell.classList.add('playable');
+                }
+            });
+        }
     }
 
     startCountdown() {
-        if (this.countdownStarted) {
-            console.log('Countdown already started');
-            return;
-        }
-        this.countdownStarted = true;
-        console.log('Starting countdown');
         const countdownDiv = document.getElementById('countdown');
         countdownDiv.style.display = 'block';
         let count = 3;
-
-        const countInterval = setInterval(() => {
-            console.log('Countdown:', count);
+        
+        const interval = setInterval(() => {
             if (count > 0) {
                 countdownDiv.textContent = count;
                 count--;
             } else {
-                clearInterval(countInterval);
+                clearInterval(interval);
                 countdownDiv.style.display = 'none';
-                // After countdown, send GAME_START message and start game
-                fetch('/start_game', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }).then(response => response.json())
-                .then(result => {
-                    if (result.success) {
-                        console.log('Game starting, first player:', result.first_player);
-                        this.myTurn = result.first_player;
-                        this.startGame();
-                    }
-                }).catch(error => {
-                    console.error('Error starting game:', error);
-                });
+                this.startGame();
             }
         }, 1000);
     }
 
-    startGame() {
-        console.log('Starting game, myTurn:', this.myTurn);
-        this.gameStarted = true;
-        document.getElementById('ship-placement').style.display = 'none';
-        document.getElementById('phase-text').textContent = 'Battle Phase';
-        document.getElementById('countdown').style.display = 'none';
-        this.updateTurnIndicator();
-        
-        // Enable/disable opponent board based on turn
-        this.opponentBoard.style.cursor = this.myTurn ? 'pointer' : 'not-allowed';
-        this.opponentBoard.style.opacity = this.myTurn ? '1' : '0.7';
-    }
-
-    updateTurnIndicator() {
-        console.log('Updating turn indicator, myTurn:', this.myTurn);
-        const indicator = document.getElementById('turn-indicator');
-        indicator.textContent = this.myTurn ? 'Your Turn' : "Opponent's Turn";
-        indicator.className = this.myTurn ? 'my-turn' : 'opponent-turn';
-        
-        // Enable/disable opponent board clicks based on turn
-        const cells = this.opponentBoard.getElementsByClassName('cell');
-        for (let cell of cells) {
-            cell.style.cursor = this.myTurn ? 'pointer' : 'not-allowed';
-        }
-    }
-
-    handleAttackResult(x, y, result) {
-        const cell = this.opponentBoard.querySelector(`[data-x="${x}"][data-y="${y}"]`);
-        cell.classList.add(result.hit ? 'hit' : 'miss');
-        
-        document.getElementById('game-status').textContent = result.message;
-        
-        if (result.game_over) {
-            this.handleGameOver(true);  // We won
-        }
-    }
-
-    handleIncomingAttack(x, y) {
-        if (!this.gameStarted) return;
-
-        fetch('/receive_attack', {
+    async startGame() {
+        const response = await fetch('/start_game', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ x, y })
-        })
-        .then(response => response.json())
-        .then(result => {
-            const cell = this.myBoard.querySelector(`[data-x="${x}"][data-y="${y}"]`);
-            cell.classList.add(result.hit ? 'hit' : 'miss');
-            
-            if (result.game_over) {
-                this.handleGameOver(false);  // We lost
-            } else {
-                this.myTurn = true;
-                this.updateTurnIndicator();
+                'Content-Type': 'application/json'
             }
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            this.gameStarted = true;
+            this.myTurn = result.first_player;
+            this.symbol = this.myTurn ? 'X' : 'O';
+            this.updateStatus();
+            this.highlightPlayableBoard();
+        }
+    }
+
+    updateStatus() {
+        const status = document.getElementById('status');
+        if (!this.gameStarted) {
+            status.textContent = 'Waiting for game to start...';
+        } else {
+            status.textContent = this.myTurn ? 'Your turn!' : "Opponent's turn";
+        }
+    }
+
+    handleGameOver(winner) {
+        const status = document.getElementById('status');
+        status.textContent = winner === this.symbol ? 'You won!' : 'You lost!';
+        // Disable all cells
+        document.querySelectorAll('.cell').forEach(cell => {
+            cell.style.pointerEvents = 'none';
         });
     }
 
-    handleGameOver(won) {
-        const message = won ? 'Congratulations! You won!' : 'Game Over! You lost!';
-        alert(message);
-        window.location.href = '/lobby';
-    }
-
     startConnectionCheck() {
-        setInterval(() => {
-            fetch('/check_connection')
-                .then(response => response.json())
-                .then(data => {
-                    if (!data.connected) {
-                        // Show disconnect message if provided
-                        const message = data.status || 'Connection lost';
-                        alert(message);
-                        // Navigate back to lobby
-                        window.location.href = '/lobby';
-                    } else if (data.game_status) {
-                        // Handle game status updates
-                        this.handleGameStatus(data.game_status);
-                    }
-                })
-                .catch(error => console.error('Connection check error:', error));
+        setInterval(async () => {
+            try {
+                const response = await fetch('/check_connection');
+                const data = await response.json();
+                
+                if (!data.connected) {
+                    alert(data.status || 'Connection lost');
+                    window.location.href = '/lobby';
+                } else if (data.game_status) {
+                    this.handleGameStatus(data.game_status);
+                }
+            } catch (error) {
+                console.error('Connection check error:', error);
+            }
         }, 2000);
     }
 
     handleGameStatus(status) {
-        console.log('Received game status:', status);
         if (status.type === 'PLAYER_READY') {
             this.opponentReady = true;
-            console.log('Updated opponent ready status:', this.opponentReady);
-            
-            if (this.isReady && this.opponentReady && !this.countdownStarted) {
-                console.log('Both players ready, starting countdown');
-                document.getElementById('phase-text').textContent = 'Both players ready! Starting game...';
+            if (this.isReady && this.opponentReady) {
                 this.startCountdown();
-            } else if (!this.isReady) {
-                console.log('Opponent is ready, waiting for us');
-                document.getElementById('phase-text').textContent = 'Opponent is ready! Place your ships and click Done.';
             }
         } else if (status.type === 'GAME_START') {
-            if (this.gameStarted) return;
-            
+            this.gameStarted = true;
             this.myTurn = status.first_player;
-            this.startGame();
+            this.symbol = this.myTurn ? 'X' : 'O';
+            this.updateStatus();
+            this.highlightPlayableBoard();
         }
-    }
-
-    setupExitHandler() {
-        // Handle page unload/exit
-        window.addEventListener('beforeunload', async (e) => {
-            // Cancel the event
-            e.preventDefault();
-            
-            // Send disconnect message to server
-            try {
-                await fetch('/disconnect', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-            } catch (error) {
-                console.error('Error sending disconnect:', error);
-            }
-            
-            // Chrome requires returnValue to be set
-            e.returnValue = '';
-        });
     }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    window.game = new BattleshipGame();
-    console.log('Game initialized:', window.game);
+    window.game = new UltimateTicTacToeGame();
 }); 

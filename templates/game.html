@@ -1,69 +1,95 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Battleship Game</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>Ultimate Tic-tac-toe</title>
+    <style>
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .ultimate-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            background: #333;
+            padding: 10px;
+        }
+
+        .sub-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2px;
+            background: #fff;
+            padding: 5px;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .cell:hover {
+            background: #e0e0e0;
+        }
+
+        .cell.playable {
+            background: #c8e6c9;
+        }
+
+        .cell.won-x {
+            background: #ffcdd2;
+        }
+
+        .cell.won-o {
+            background: #bbdefb;
+        }
+
+        .status {
+            margin: 20px 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        #ready-btn {
+            padding: 10px 20px;
+            font-size: 18px;
+            margin: 20px;
+            cursor: pointer;
+        }
+
+        .waiting-message {
+            font-size: 20px;
+            color: #666;
+            margin: 20px;
+        }
+
+        #countdown {
+            font-size: 48px;
+            font-weight: bold;
+            color: #2196F3;
+            margin: 20px;
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <div class="game-container">
-        <div id="game-phase" class="game-phase">
-            <h2>Phase: <span id="phase-text">Placing Ships</span></h2>
-            <div id="countdown" style="display: none;"></div>
-        </div>
-
-        <div class="boards">
-            <div class="board-container">
-                <h2>Your Board</h2>
-                <div id="my-board" class="board">
-                    <!-- Create 10x10 grid cells -->
-                    {% for y in range(10) %}
-                        {% for x in range(10) %}
-                            <div class="cell" data-x="{{ x }}" data-y="{{ y }}"></div>
-                        {% endfor %}
-                    {% endfor %}
-                </div>
-            </div>
-            <div class="board-container">
-                <h2>Opponent's Board</h2>
-                <div id="opponent-board" class="board">
-                    <!-- Create 10x10 grid cells -->
-                    {% for y in range(10) %}
-                        {% for x in range(10) %}
-                            <div class="cell" data-x="{{ x }}" data-y="{{ y }}"></div>
-                        {% endfor %}
-                    {% endfor %}
-                </div>
-                <div id="turn-indicator"></div>
-            </div>
-        </div>
-        
-        <div class="controls">
-            <div id="ship-placement" class="ship-placement">
-                <h3>Place your ships</h3>
-                <div class="ships">
-                    <button data-ship="carrier" data-length="5">Carrier (5)</button>
-                    <button data-ship="battleship" data-length="4">Battleship (4)</button>
-                    <button data-ship="cruiser" data-length="3">Cruiser (3)</button>
-                    <button data-ship="submarine" data-length="3">Submarine (3)</button>
-                    <button data-ship="destroyer" data-length="2">Destroyer (2)</button>
-                </div>
-                <button id="rotate">Rotate</button>
-                <button 
-                    id="ready-btn" 
-                    class="ready-button" 
-                    style="display: none; margin-top: 20px;"
-                >Done</button>
-            </div>
-            <div id="game-status"></div>
-        </div>
+        <div class="status" id="status">Waiting for opponent...</div>
+        <div id="countdown"></div>
+        <button id="ready-btn">Ready</button>
+        <div class="ultimate-board" id="gameBoard"></div>
     </div>
-    <!-- Load game.js first -->
-    <script src="{{ url_for('static', filename='js/game.js') }}"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            window.game = new BattleshipGame();
-            console.log('Game initialized:', game);
-        });
-    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="/static/js/game.js"></script>
 </body>
 </html> 

@@ -268,5 +268,35 @@ def start_game():
         'first_player': game.my_turn
     })
 
+@app.route('/make_move', methods=['POST'])
+def make_move():
+    data = request.json
+    username = session.get('username')
+    game = game_instances.get(username)
+    
+    if not game:
+        return jsonify({'valid': False, 'message': 'Game not found'}), 404
+    
+    result = game.make_move(
+        data['main_row'],
+        data['main_col'],
+        data['sub_row'],
+        data['sub_col']
+    )
+    
+    # Send move to opponent if valid
+    if result['valid']:
+        peer = peer_instances.get(username)
+        if peer and peer.is_connected:
+            peer.send_message({
+                'type': 'MOVE',
+                'main_row': data['main_row'],
+                'main_col': data['main_col'],
+                'sub_row': data['sub_row'],
+                'sub_col': data['sub_col']
+            })
+    
+    return jsonify(result)
+
 if __name__ == '__main__':
     app.run(debug=True) 

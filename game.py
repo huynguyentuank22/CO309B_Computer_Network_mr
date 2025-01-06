@@ -1,91 +1,100 @@
-class BattleshipGame:
+class UltimateTicTacToe:
     def __init__(self, username):
         self.username = username
-        self.board_size = 10
-        self.my_board = [[None for _ in range(self.board_size)] for _ in range(self.board_size)]
-        self.opponent_board = [[None for _ in range(self.board_size)] for _ in range(self.board_size)]
-        self.ships = {
-            'carrier': 5,
-            'battleship': 4,
-            'cruiser': 3,
-            'submarine': 3,
-            'destroyer': 2
-        }
-        self.placed_ships = []
+        self.board = self.create_empty_board()
+        self.current_board = None  # Which sub-board to play in (None means any)
         self.ready = False
         self.opponent_ready = False
         self.my_turn = False
         self.game_started = False
-        self.remaining_ships = sum(length for length in self.ships.values())
+        self.winner = None
+        self.symbol = None  # 'X' or 'O'
+
+    def create_empty_board(self):
+        # Create 3x3 grid of 3x3 boards
+        return [[[['' for _ in range(3)] for _ in range(3)] for _ in range(3)] for _ in range(3)]
+
+    def make_move(self, main_row, main_col, sub_row, sub_col):
+        """Attempt to make a move at the specified position."""
+        if not self.game_started or not self.my_turn:
+            return {'valid': False, 'message': 'Not your turn'}
+
+        if self.current_board is not None:
+            if (main_row, main_col) != self.current_board:
+                return {'valid': False, 'message': 'Wrong sub-board'}
+
+        if self.board[main_row][main_col][sub_row][sub_col]:
+            return {'valid': False, 'message': 'Cell already taken'}
+
+        # Make the move
+        self.board[main_row][main_col][sub_row][sub_col] = self.symbol
         
-    def place_ship(self, ship, x, y, orientation):
-        if ship not in self.ships or ship in self.placed_ships:
-            return False
+        # Check if sub-board is won
+        if self.check_win(self.board[main_row][main_col]):
+            # Mark the main board position as won
+            self.board[main_row][main_col] = [[self.symbol for _ in range(3)] for _ in range(3)]
             
-        length = self.ships[ship]
-        if orientation == 'horizontal':
-            if x + length > self.board_size:
-                return False
-            # Check if space is free
-            for i in range(length):
-                if self.my_board[y][x + i] is not None:
-                    return False
-            # Place ship
-            for i in range(length):
-                self.my_board[y][x + i] = ship
-        else:  # vertical
-            if y + length > self.board_size:
-                return False
-            # Check if space is free
-            for i in range(length):
-                if self.my_board[y + i][x] is not None:
-                    return False
-            # Place ship
-            for i in range(length):
-                self.my_board[y + i][x] = ship
-                
-        self.placed_ships.append(ship)
-        return True
-        
-    def is_placement_complete(self):
-        """Check if all ships have been placed."""
-        return len(self.placed_ships) == len(self.ships)
+            # Check if game is won
+            if self.check_game_win():
+                return {
+                    'valid': True,
+                    'game_over': True,
+                    'winner': self.symbol
+                }
 
-    def receive_attack(self, x, y):
-        """Process an attack from the opponent."""
-        if x < 0 or x >= self.board_size or y < 0 or y >= self.board_size:
-            return {'hit': False, 'message': 'Invalid coordinates'}
+        # Set next board based on move position
+        if self.board[sub_row][sub_col][0][0] == '':  # If target board is not full/won
+            self.current_board = (sub_row, sub_col)
+        else:
+            self.current_board = None  # Can play anywhere
 
-        cell = self.my_board[y][x]
-        if cell:  # Hit
-            self.remaining_ships -= 1
-            self.my_board[y][x] = 'hit'
-            return {
-                'hit': True,
-                'message': f'Hit {cell}!',
-                'ship': cell,
-                'game_over': self.remaining_ships == 0
-            }
-        else:  # Miss
-            self.my_board[y][x] = 'miss'
-            return {'hit': False, 'message': 'Miss!'}
+        self.my_turn = False
+        return {'valid': True, 'next_board': self.current_board}
 
-    def fire(self, x, y):
-        if x < 0 or x >= self.board_size or y < 0 or y >= self.board_size:
-            return {'hit': False, 'message': 'Invalid coordinates'}
-            
-        if self.opponent_board[y][x] is not None:
-            return {'hit': False, 'message': 'Already fired at this position'}
-            
-        # The actual result will come from the opponent
-        return {'valid': True, 'x': x, 'y': y} 
+    def check_win(self, board):
+        """Check if a board is won."""
+        # Check rows
+        for row in board:
+            if row[0] and row[0] == row[1] == row[2]:
+                return True
+
+        # Check columns
+        for col in range(3):
+            if board[0][col] and board[0][col] == board[1][col] == board[2][col]:
+                return True
+
+        # Check diagonals
+        if board[0][0] and board[0][0] == board[1][1] == board[2][2]:
+            return True
+        if board[0][2] and board[0][2] == board[1][1] == board[2][0]:
+            return True
+
+        return False
+
+    def check_game_win(self):
+        """Check if the entire game is won."""
+        # Convert won boards to simple 3x3 grid
+        main_board = [[self.get_board_winner(self.board[i][j]) 
+                      for j in range(3)] for i in range(3)]
+        return self.check_win(main_board)
+
+    def get_board_winner(self, board):
+        """Get the winner of a sub-board."""
+        # If board is won, all cells will be the same
+        return board[0][0] if board[0][0] == board[1][1] == board[2][2] else ''
 
     def set_ready(self):
         """Mark player as ready."""
         self.ready = True
-        return self.ready and self.opponent_ready  # Return True if both players are ready
+        return self.ready and self.opponent_ready
 
     def set_opponent_ready(self):
         """Mark opponent as ready."""
         self.opponent_ready = True
-        return self.ready and self.opponent_ready  # Return True if both players are ready 
+        return self.ready and self.opponent_ready
+
+    def start_game(self, is_first):
+        """Start the game."""
+        self.game_started = True
+        self.my_turn = is_first
+        self.symbol = 'X' if is_first else 'O' 
