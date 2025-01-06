@@ -30,6 +30,10 @@ def create_game():
     peer.initialize_udp_socket()
     peer.initialize_tcp_socket()
     
+    # Start UDP listener thread
+    udp_listener_thread = threading.Thread(target=peer.listen_for_udp, daemon=True)
+    udp_listener_thread.start()
+    
     # Create game instance
     game = UltimateTicTacToe(username)
     
