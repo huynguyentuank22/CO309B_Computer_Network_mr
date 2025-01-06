@@ -160,17 +160,18 @@ def handle_request():
 def check_connection():
     username = session.get('username')
     peer = peer_instances.get(username)
+    game = game_instances.get(username)
     
     if not peer:
         return jsonify({'connected': False, 'status': 'No peer connection'})
     
     if peer.is_connected:
-        # If connected and has game status, return it
         game_status = peer.get_game_status()
         return jsonify({
             'connected': True,
             'game_status': game_status,
-            'opponent': peer.opponent_username
+            'opponent': peer.opponent_username,
+            'my_turn': game.my_turn if game else False
         })
     
     return jsonify({'connected': False, 'status': 'Waiting for connection'})
@@ -343,7 +344,14 @@ def receive_move():
         data['sub_col']
     )
     
-    return jsonify({'success': True})
+    # Update game status for the receiving player
+    game.my_turn = True  # It's now this player's turn
+    
+    return jsonify({
+        'success': True,
+        'valid': True,
+        'next_board': [data['sub_row'], data['sub_col']]
+    })
 
 if __name__ == '__main__':
     app.run(debug=True) 
