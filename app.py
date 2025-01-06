@@ -1,51 +1,49 @@
-from flask import Flask, render_template, request, jsonify, session, redirect
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from game import UltimateTicTacToe
 from peer import PeerNetwork
 import threading
 import random
 
 app = Flask(__name__)
-app.secret_key = 'battleship_secret_key'  # Required for session
+app.secret_key = 'your_secret_key_here'  # Required for session
 
 game_instances = {}
 peer_instances = {}
 
 @app.route('/')
 def index():
+    # Clear any existing session
+    session.clear()
     return render_template('index.html')
 
 @app.route('/create_game', methods=['POST'])
 def create_game():
     username = request.form.get('username')
     if not username:
-        return jsonify({'error': 'Username is required'}), 400
+        return jsonify({'success': False, 'error': 'Username is required'})
+    
+    # Store username in session
+    session['username'] = username
     
     # Create peer network instance
     peer = PeerNetwork(username)
-    # Initialize UDP socket
-    if not peer.initialize_udp_socket():
-        return jsonify({'error': 'Failed to initialize network'}), 500
-    
-    # Start UDP listener thread
-    udp_listener_thread = threading.Thread(target=peer.listen_for_udp, daemon=True)
-    udp_listener_thread.start()
+    peer.initialize_udp_socket()
+    peer.initialize_tcp_socket()
     
     # Create game instance
-    game = BattleshipGame(username)
+    game = UltimateTicTacToe(username)
     
     # Store instances
-    session['username'] = username
     game_instances[username] = game
     peer_instances[username] = peer
     
-    return jsonify({'success': True, 'redirect': '/lobby'})
+    return jsonify({'success': True})
 
 @app.route('/game')
 def game():
-    username = session.get('username')
-    if not username or username not in game_instances:
-        return redirect('/')
-    return render_template('game.html', username=username)
+    if 'username' not in session:
+        return redirect(url_for('index'))
+    return render_template('game.html')
 
 @app.route('/place_ship', methods=['POST'])
 def place_ship():
@@ -88,10 +86,10 @@ def fire():
 
 @app.route('/lobby')
 def lobby():
-    username = session.get('username')
-    if not username:
-        return redirect('/')
-    return render_template('lobby.html', username=username)
+    # Check if user is logged in
+    if 'username' not in session:
+        return redirect(url_for('index'))
+    return render_template('lobby.html')
 
 @app.route('/broadcast_request', methods=['POST'])
 def broadcast_request():
@@ -297,6 +295,28 @@ def make_move():
             })
     
     return jsonify(result)
+
+@app.route('/get_username')
+def get_username():
+    username = session.get('username')
+    if not username:
+        return jsonify({'username': None}), 401
+    return jsonify({'username': username})
+
+@app.route('/logout')
+def logout():
+    username = session.get('username')
+    if username:
+        # Clean up instances
+        if username in game_instances:
+            del game_instances[username]
+        if username in peer_instances:
+            peer = peer_instances[username]
+            if peer:
+                peer.disconnect()
+            del peer_instances[username]
+    session.clear()
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(debug=True) 

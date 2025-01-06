@@ -1,65 +1,121 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Battleship Game - Login</title>
+    <title>Ultimate Tic-tac-toe - Login</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+        }
+
         .login-container {
-            max-width: 400px;
-            margin: 100px auto;
-            padding: 20px;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             text-align: center;
-            border: 1px solid #ccc;
-            border-radius: 5px;
         }
-        
-        .login-form input {
-            margin: 10px;
-            padding: 5px;
-            width: 200px;
+
+        h1 {
+            color: #1a73e8;
+            margin-bottom: 30px;
         }
-        
-        .login-form button {
-            margin: 10px;
-            padding: 5px 20px;
-            background-color: #4CAF50;
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            padding: 10px 15px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 250px;
+            outline: none;
+        }
+
+        input[type="text"]:focus {
+            border-color: #1a73e8;
+        }
+
+        button {
+            background-color: #1a73e8;
             color: white;
+            padding: 12px 24px;
             border: none;
-            border-radius: 3px;
+            border-radius: 4px;
+            font-size: 16px;
             cursor: pointer;
+            transition: background-color 0.3s;
         }
-        
-        .login-form button:hover {
-            background-color: #45a049;
+
+        button:hover {
+            background-color: #1557b0;
+        }
+
+        .error-message {
+            color: #d93025;
+            margin-top: 10px;
+            display: none;
         }
     </style>
 </head>
 <body>
     <div class="login-container">
-        <h2>Welcome to Battleship</h2>
-        <div class="login-form">
-            <form id="loginForm">
-                <input type="text" id="username" name="username" placeholder="Enter your username" required>
-                <br>
-                <button type="submit">Start Game</button>
-            </form>
-        </div>
+        <h1>Ultimate Tic-tac-toe</h1>
+        <form id="loginForm" onsubmit="return false;">
+            <div class="input-group">
+                <input type="text" id="username" placeholder="Enter your username" required minlength="2">
+            </div>
+            <button type="button" onclick="login()">Start Playing</button>
+            <div id="error-message" class="error-message"></div>
+        </form>
     </div>
 
     <script>
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const username = document.getElementById('username').value;
+        async function login() {
+            const username = document.getElementById('username').value.trim();
+            const errorMessage = document.getElementById('error-message');
             
-            const response = await fetch('/create_game', {
-                method: 'POST',
-                body: new FormData(e.target)
-            });
-            
-            const result = await response.json();
-            if (result.success) {
-                window.location.href = result.redirect;
-            } else {
-                alert(result.error || 'Failed to create game');
+            if (!username) {
+                errorMessage.textContent = 'Please enter a username';
+                errorMessage.style.display = 'block';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('username', username);
+
+            try {
+                const response = await fetch('/create_game', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = '/lobby';
+                } else {
+                    errorMessage.textContent = data.error || 'An error occurred';
+                    errorMessage.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorMessage.textContent = 'Connection error occurred';
+                errorMessage.style.display = 'block';
+            }
+        }
+
+        // Allow Enter key to submit
+        document.getElementById('username').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                login();
             }
         });
     </script>

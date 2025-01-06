@@ -1,217 +1,203 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Battleship - Lobby</title>
+    <title>Ultimate Tic-tac-toe - Lobby</title>
     <style>
-        .lobby-container {
-            max-width: 800px;
-            margin: 20px auto;
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
             padding: 20px;
+            background-color: #f0f2f5;
         }
-        
-        .player-info {
-            text-align: center;
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .welcome-banner {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
-            padding: 10px;
-            background-color: #f0f0f0;
-            border-radius: 5px;
         }
-        
-        .game-controls {
+
+        h1 {
+            color: #1a73e8;
+            margin: 0;
+        }
+
+        .username {
+            color: #1557b0;
+            font-weight: bold;
+        }
+
+        .actions {
             display: flex;
-            justify-content: center;
             gap: 10px;
-            margin-bottom: 20px;
+            margin: 20px 0;
         }
-        
-        .opponent-requests {
-            border: 1px solid #ccc;
+
+        button {
+            background-color: #1a73e8;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #1557b0;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .players-list {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .player-item {
             padding: 10px;
-            margin-top: 20px;
-            border-radius: 5px;
-        }
-        
-        .request-item {
+            border-bottom: 1px solid #eee;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px;
-            border-bottom: 1px solid #eee;
         }
-        
-        .request-buttons {
-            display: flex;
-            gap: 10px;
+
+        .player-item:last-child {
+            border-bottom: none;
         }
-        
-        button {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        
-        .search-btn {
-            background-color: #4CAF50;
-            color: white;
-        }
-        
-        .accept-btn {
-            background-color: #4CAF50;
-            color: white;
-        }
-        
-        .reject-btn {
-            background-color: #f44336;
-            color: white;
-        }
-        
+
         .status-message {
+            color: #666;
+            font-style: italic;
             text-align: center;
-            margin: 10px 0;
-            padding: 10px;
-            border-radius: 4px;
+            padding: 20px;
         }
-        
-        .searching {
-            background-color: #fff3cd;
-            color: #856404;
+
+        .logout-btn {
+            background-color: #dc3545;
         }
-        
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
+
+        .logout-btn:hover {
+            background-color: #c82333;
         }
     </style>
 </head>
 <body>
-    <div class="lobby-container">
-        <div class="player-info">
-            <h2>Welcome, {{ username }}!</h2>
+    <div class="container">
+        <div class="welcome-banner">
+            <h1>Welcome, <span class="username" id="username"></span>!</h1>
         </div>
-        
-        <div class="game-controls">
-            <button id="searchBtn" class="search-btn">Search for Opponent</button>
+
+        <div class="actions">
+            <button id="findMatch" onclick="findMatch()">Find Match</button>
+            <button id="cancelSearch" onclick="cancelSearch()" style="display: none;">Cancel Search</button>
+            <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
-        
-        <div id="statusMessage" class="status-message" style="display: none;"></div>
-        
-        <div class="opponent-requests">
-            <h3>Connection Requests</h3>
-            <div id="requestsList">
-                <!-- Requests will be added here dynamically -->
-            </div>
+
+        <div class="players-list">
+            <h2>Available Players</h2>
+            <div id="playersList"></div>
+            <div id="statusMessage" class="status-message">No players available</div>
         </div>
     </div>
 
     <script>
-        let isSearching = false;
-        
-        document.getElementById('searchBtn').addEventListener('click', async () => {
-            const btn = document.getElementById('searchBtn');
-            const statusMsg = document.getElementById('statusMessage');
-            
-            if (!isSearching) {
-                // Start searching
-                try {
-                    const response = await fetch('/broadcast_request', { method: 'POST' });
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        isSearching = true;
-                        btn.textContent = 'Cancel Search';
-                        statusMsg.textContent = 'Searching for opponents...';
-                        statusMsg.classList.add('searching');
-                        statusMsg.style.display = 'block';
-                    } else {
-                        statusMsg.textContent = result.error || 'Failed to start search';
-                        statusMsg.classList.remove('searching');
-                        statusMsg.classList.add('error');
-                        statusMsg.style.display = 'block';
-                    }
-                } catch (error) {
-                    statusMsg.textContent = 'Connection error occurred';
-                    statusMsg.classList.remove('searching');
-                    statusMsg.classList.add('error');
-                    statusMsg.style.display = 'block';
-                }
-            } else {
-                // Cancel searching
-                isSearching = false;
-                btn.textContent = 'Search for Opponent';
-                statusMsg.style.display = 'none';
-                
-                // Cancel broadcast
-                await fetch('/cancel_search', { method: 'POST' });
-            }
-        });
-
-        // Poll for connection requests
-        function pollRequests() {
-            // First check if we're connected
-            fetch('/check_connection')
+        document.addEventListener('DOMContentLoaded', () => {
+            // Display username
+            fetch('/get_username')
                 .then(response => response.json())
                 .then(data => {
-                    if (data.connected && data.opponent) {
-                        // If connected, navigate to game page
-                        window.location.href = '/game';
-                        return;
-                    }
-                    
-                    // If not connected, continue polling for requests
-                    return fetch('/get_requests');
-                })
+                    document.getElementById('username').textContent = data.username;
+                });
+            
+            // Start checking for available players
+            updatePlayersList();
+            setInterval(updatePlayersList, 2000);
+        });
+
+        function findMatch() {
+            document.getElementById('findMatch').style.display = 'none';
+            document.getElementById('cancelSearch').style.display = 'inline';
+            
+            fetch('/broadcast_request', {
+                method: 'POST'
+            }).then(response => response.json())
+              .then(data => {
+                  if (!data.success) {
+                      alert(data.error || 'Failed to start matchmaking');
+                      cancelSearch();
+                  }
+              });
+        }
+
+        function cancelSearch() {
+            document.getElementById('findMatch').style.display = 'inline';
+            document.getElementById('cancelSearch').style.display = 'none';
+            
+            fetch('/cancel_search', {
+                method: 'POST'
+            });
+        }
+
+        function updatePlayersList() {
+            fetch('/get_requests')
                 .then(response => response.json())
-                .then(requests => {
-                    console.log('Received requests:', requests);
-                    const requestsList = document.getElementById('requestsList');
-                    requestsList.innerHTML = '';
+                .then(players => {
+                    const playersList = document.getElementById('playersList');
+                    const statusMessage = document.getElementById('statusMessage');
                     
-                    requests.forEach(request => {
-                        const requestItem = document.createElement('div');
-                        requestItem.className = 'request-item';
-                        requestItem.innerHTML = `
-                            <span>${request.username} wants to play!</span>
-                            <div class="request-buttons">
-                                <button class="accept-btn" onclick="handleRequest('${request.username}', true)">Accept</button>
-                                <button class="reject-btn" onclick="handleRequest('${request.username}', false)">Reject</button>
+                    if (players.length === 0) {
+                        playersList.innerHTML = '';
+                        statusMessage.style.display = 'block';
+                    } else {
+                        statusMessage.style.display = 'none';
+                        playersList.innerHTML = players.map(player => `
+                            <div class="player-item">
+                                <span>${player.username}</span>
+                                <button onclick="acceptMatch('${player.username}')">Accept</button>
                             </div>
-                        `;
-                        requestsList.appendChild(requestItem);
-                    });
+                        `).join('');
+                    }
+                });
+        }
+
+        function acceptMatch(username) {
+            fetch('/handle_request', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: username,
+                    accept: true
                 })
-                .catch(error => {
-                    console.error('Error polling requests:', error);
-                });
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      window.location.href = '/game';
+                  }
+              });
         }
 
-        async function handleRequest(username, accept) {
-            try {
-                const response = await fetch('/handle_request', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        username: username,
-                        accept: accept
-                    })
-                });
-                
-                const result = await response.json();
-                if (result.success && accept) {
-                    window.location.href = '/game';
-                } else if (!result.success && accept) {
-                    alert('Failed to connect to opponent. They may be behind a firewall or on a different network.');
-                }
-            } catch (error) {
-                console.error('Connection error:', error);
-                alert('Connection failed. Please try again.');
-            }
+        function logout() {
+            fetch('/disconnect', {
+                method: 'POST'
+            }).then(() => {
+                window.location.href = '/';
+            });
         }
-
-        // Poll every 2 seconds
-        setInterval(pollRequests, 2000);
     </script>
 </body>
 </html> 
