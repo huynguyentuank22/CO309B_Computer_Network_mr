@@ -25,6 +25,7 @@ class PeerNetwork:
         self.game_status = None  # To store game status messages
         self.ready = False  # My ready status
         self.opponent_ready = False  # Opponent's ready status
+        self.accepted_connection = False
 
     def get_local_ip(self):
         """Get local IP address."""
@@ -296,10 +297,10 @@ class PeerNetwork:
                 'strength': r['strength']
             } for r in filtered_requests]
 
-    def accept_connection(self, username):
+    def accept_connection(self, opponent_username):
         """Accept a connection request from a specific user."""
         for request in self.pending_requests:
-            if request['username'] == username:
+            if request['username'] == opponent_username:
                 try:
                     # Stop broadcasting if we're searching
                     self.stop_broadcasting()
@@ -319,8 +320,8 @@ class PeerNetwork:
                     peer_socket.settimeout(None)
                     self.peer_connection = peer_socket
                     self.is_connected = True
-                    self.opponent_username = username
-                    print(f"Connected to peer {username} at {request['ip']}:{request['tcp_port']}")
+                    self.opponent_username = opponent_username
+                    print(f"Connected to peer {opponent_username} at {request['ip']}:{request['tcp_port']}")
 
                     # Start message handling thread
                     threading.Thread(target=self.handle_peer_messages,
@@ -334,6 +335,8 @@ class PeerNetwork:
                         'type': 'CONNECTION_ACCEPTED',
                         'username': self.username
                     })
+                    
+                    self.accepted_connection = True
                     
                     return True
                 except Exception as e:
