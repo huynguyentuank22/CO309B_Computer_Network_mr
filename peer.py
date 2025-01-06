@@ -369,21 +369,26 @@ class PeerNetwork:
                 
                 if message.get('type') == 'MOVE':
                     print(f"Received move: {message}")
-                    # Update game state directly
-                    self.game.receive_move(
+                    # Update game state and get results
+                    result = self.game.receive_move(
                         message['main_row'],
                         message['main_col'],
                         message['sub_row'],
                         message['sub_col']
                     )
                     self.game.print_board()
-                    # Store the move in game_status for the frontend to handle
+                    
+                    # Store the move and results in game_status for the frontend
                     self.game_status = {
                         'type': 'MOVE',
                         'main_row': message['main_row'],
                         'main_col': message['main_col'],
                         'sub_row': message['sub_row'],
-                        'sub_col': message['sub_col']
+                        'sub_col': message['sub_col'],
+                        'sub_board_result': result.get('sub_board_result'),
+                        'game_over': result.get('game_over'),
+                        'winner': result.get('winner'),
+                        'is_draw': result.get('is_draw')
                     }
                 elif message.get('type') == 'GAME_START':
                     print(f"Game starting, first player: {message.get('first_player')}")

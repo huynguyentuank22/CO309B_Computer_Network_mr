@@ -241,14 +241,18 @@ def make_move():
         data['sub_col']
     )
     
-    # Send move to opponent if valid
+    # Send move and results to opponent if valid
     if result['valid'] and peer and peer.is_connected:
         peer.send_message({
             'type': 'MOVE',
             'main_row': data['main_row'],
             'main_col': data['main_col'],
             'sub_row': data['sub_row'],
-            'sub_col': data['sub_col']
+            'sub_col': data['sub_col'],
+            'sub_board_result': result.get('sub_board_result'),
+            'game_over': result.get('game_over'),
+            'winner': result.get('winner'),
+            'is_draw': result.get('is_draw')
         })
         # Update turn
         game.my_turn = False

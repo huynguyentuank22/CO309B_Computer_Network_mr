@@ -121,13 +121,22 @@ class UltimateTicTacToe:
         opponent_symbol = 'O' if self.symbol == 'X' else 'X'
         self.board[main_row][main_col][sub_row][sub_col] = opponent_symbol
         
-        # Update current board for next move
-        if self.board[sub_row][sub_col][0][0] == '':  # If target board is not full/won
-            self.current_board = (sub_row, sub_col)
-        else:
-            self.current_board = None  # Can play anywhere
+        # Check for sub-board win
+        sub_board_result = self.check_sub_board(main_row, main_col)
+        if sub_board_result:
+            # Store the sub-board result
+            self.sub_board_winners[main_row][main_col] = sub_board_result
+            
+        # Check for main board win using sub-board winners
+        game_result = self.check_win(self.sub_board_winners)
         
-        self.my_turn = True  # It's our turn after opponent's move 
+        # Update current board for next move
+        if self.sub_board_winners[sub_row][sub_col]:  # If target board is won
+            self.current_board = None  # Can play anywhere
+        else:
+            self.current_board = (sub_row, sub_col)
+        
+        self.my_turn = True  # It's our turn after opponent's move
 
     # can comment
     def print_board(self):
