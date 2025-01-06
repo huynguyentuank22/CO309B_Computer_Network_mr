@@ -140,17 +140,21 @@ def handle_request():
             my_game = game_instances.get(username)
             
             if opponent_game and my_game:
-                # Accepting player goes first (X)
-                my_game.start_game(True)  # Accepting player is first
+                # Set up both games
+                is_first = True  # Accepting player always goes first
+                my_game.start_game(is_first)
                 
-                # Send game start to broadcasting player (they go second)
+                # Notify opponent through peer connection
                 peer.send_message({
                     'type': 'GAME_START',
-                    'first_player': False,  # Broadcasting player goes second (O)
+                    'first_player': False,  # Broadcasting player goes second
                     'opponent': username
                 })
             
             return jsonify({'success': True})
+    elif peer:
+        peer.reject_connection(data['username'])
+        return jsonify({'success': True})
     return jsonify({'success': False})
 
 @app.route('/check_connection', methods=['GET'])
@@ -251,13 +255,10 @@ def start_game():
     
     if not game or not peer:
         return jsonify({'success': False}), 404
-        
-    # Initialize game state
-    game.gameStarted = True
     
     return jsonify({
         'success': True,
-        'first_player': game.my_turn  # Return the current turn state
+        'first_player': game.my_turn
     })
 
 @app.route('/make_move', methods=['POST'])
