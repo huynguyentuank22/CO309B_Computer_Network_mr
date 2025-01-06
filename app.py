@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify, session, redirect
-from game import BattleshipGame
+from game import UltimateTicTacToe
 from peer import PeerNetwork
 import threading
 import random
