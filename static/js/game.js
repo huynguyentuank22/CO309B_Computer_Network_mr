@@ -95,21 +95,27 @@ class UltimateTicTacToeGame {
             this.myTurn = false;
             this.updateStatus();
             
-            if (result.game_over) {
-                this.handleGameOver(this.symbol);
-            } else {
-                // Check if sub-board is won
-                if (result.sub_board_result) {
-                    this.handleSubBoardResult(
-                        mainRow,
-                        mainCol,
-                        result.sub_board_result
-                    );
-                }
-                
-                this.currentBoard = [subRow, subCol];
-                this.highlightPlayableBoard();
+            // Handle sub-board result
+            if (result.sub_board_result) {
+                this.handleSubBoardResult(
+                    mainRow,
+                    mainCol,
+                    result.sub_board_result
+                );
             }
+            
+            // Handle game over
+            if (result.game_over) {
+                if (result.is_draw) {
+                    this.handleGameOver('draw');
+                } else {
+                    this.handleGameOver(result.winner);
+                }
+                return;
+            }
+            
+            this.currentBoard = [subRow, subCol];
+            this.highlightPlayableBoard();
         }
     }
 
@@ -122,9 +128,15 @@ class UltimateTicTacToeGame {
         }
     }
 
-    handleGameOver(winner) {
+    handleGameOver(result) {
         const status = document.getElementById('status');
-        status.textContent = winner === this.symbol ? 'You won!' : 'You lost!';
+        if (result === 'draw') {
+            status.textContent = "Game Over - It's a draw!";
+        } else {
+            status.textContent = result === this.symbol ? 'You won!' : 'You lost!';
+        }
+        
+        // Disable all cells
         document.querySelectorAll('.cell').forEach(cell => {
             cell.style.pointerEvents = 'none';
         });

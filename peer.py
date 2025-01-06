@@ -376,6 +376,7 @@ class PeerNetwork:
                         message['sub_row'],
                         message['sub_col']
                     )
+                    self.game.print_board()
                     # Store the move in game_status for the frontend to handle
                     self.game_status = {
                         'type': 'MOVE',
