@@ -256,17 +256,19 @@ def start_game():
         return jsonify({'success': False}), 404
         
     # Randomly choose who goes first
-    game.my_turn = random.choice([True, False])
+    is_first = random.choice([True, False])
+    game.start_game(is_first)
     
     # Notify opponent
-    peer.send_message({
-        'type': 'GAME_START',
-        'first_player': game.my_turn
-    })
+    if peer.is_connected:
+        peer.send_message({
+            'type': 'GAME_START',
+            'first_player': not is_first  # Opposite for opponent
+        })
     
     return jsonify({
         'success': True,
-        'first_player': game.my_turn
+        'first_player': is_first
     })
 
 @app.route('/make_move', methods=['POST'])

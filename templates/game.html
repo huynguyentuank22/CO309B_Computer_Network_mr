@@ -59,37 +59,13 @@
             font-size: 24px;
             font-weight: bold;
         }
-
-        #ready-btn {
-            padding: 10px 20px;
-            font-size: 18px;
-            margin: 20px;
-            cursor: pointer;
-        }
-
-        .waiting-message {
-            font-size: 20px;
-            color: #666;
-            margin: 20px;
-        }
-
-        #countdown {
-            font-size: 48px;
-            font-weight: bold;
-            color: #2196F3;
-            margin: 20px;
-            display: none;
-        }
     </style>
 </head>
 <body>
     <div class="game-container">
-        <div class="status" id="status">Waiting for opponent...</div>
-        <div id="countdown"></div>
-        <button id="ready-btn">Ready</button>
+        <div class="status" id="status">Game in progress...</div>
         <div class="ultimate-board" id="gameBoard"></div>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script src="/static/js/game.js"></script>
 </body>
 </html> 
