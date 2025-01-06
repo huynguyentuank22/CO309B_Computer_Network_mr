@@ -98,6 +98,15 @@ class UltimateTicTacToeGame {
             if (result.game_over) {
                 this.handleGameOver(this.symbol);
             } else {
+                // Check if sub-board is won
+                if (result.sub_board_result) {
+                    this.handleSubBoardResult(
+                        mainRow,
+                        mainCol,
+                        result.sub_board_result
+                    );
+                }
+                
                 this.currentBoard = [subRow, subCol];
                 this.highlightPlayableBoard();
             }
@@ -153,6 +162,15 @@ class UltimateTicTacToeGame {
                 this.myTurn = true;
                 this.updateStatus();
                 
+                // Check if sub-board is won
+                if (status.sub_board_result) {
+                    this.handleSubBoardResult(
+                        status.main_row,
+                        status.main_col,
+                        status.sub_board_result
+                    );
+                }
+                
                 this.currentBoard = [status.sub_row, status.sub_col];
                 this.highlightPlayableBoard();
             }
@@ -162,6 +180,26 @@ class UltimateTicTacToeGame {
             this.symbol = this.myTurn ? 'X' : 'O';
             this.updateStatus();
             this.highlightPlayableBoard();
+        }
+    }
+
+    handleSubBoardResult(mainRow, mainCol, result) {
+        const subBoard = document.querySelector(
+            `.sub-board[data-row="${mainRow}"][data-col="${mainCol}"]`
+        );
+        
+        if (subBoard) {
+            // Clear all cells in the sub-board
+            subBoard.innerHTML = '';
+            subBoard.classList.add('won');
+            
+            if (result === 'draw') {
+                subBoard.classList.add('draw');
+                subBoard.textContent = '-';
+            } else {
+                subBoard.classList.add(`won-${result.toLowerCase()}`);
+                subBoard.textContent = result;  // 'X' or 'O'
+            }
         }
     }
 
