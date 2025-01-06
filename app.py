@@ -255,16 +255,8 @@ def start_game():
     if not game or not peer:
         return jsonify({'success': False}), 404
         
-    # Randomly choose who goes first
-    is_first = random.choice([True, False])
-    game.start_game(is_first)
-    
-    # Notify opponent
-    if peer.is_connected:
-        peer.send_message({
-            'type': 'GAME_START',
-            'first_player': not is_first  # Opposite for opponent
-        })
+    # Use the existing game turn state instead of random choice
+    is_first = game.my_turn  # This was set during handle_request
     
     return jsonify({
         'success': True,
