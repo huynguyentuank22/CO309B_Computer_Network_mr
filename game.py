@@ -111,3 +111,28 @@ class UltimateTicTacToe:
             self.current_board = None  # Can play anywhere
         
         self.my_turn = True  # It's our turn after opponent's move 
+
+    # can comment
+    def print_board(self):
+        """Print the current state of the ultimate tic-tac-toe board."""
+        # Helper function to get cell content or space if empty
+        def get_cell(main_row, main_col, sub_row, sub_col):
+            return self.board[main_row][main_col][sub_row][sub_col] or ' '
+
+        # Print each row of sub-boards
+        for main_row in range(3):
+            # Print each row within the sub-boards
+            for sub_row in range(3):
+                # Print the three sub-boards in this row
+                for main_col in range(3):
+                    print('|', end=' ')
+                    for sub_col in range(3):
+                        cell = get_cell(main_row, main_col, sub_row, sub_col)
+                        print(f'{cell}', end=' ')
+                    print('|', end=' ')
+                print()  # New line after each sub-board row
+            print('-' * 35)  # Separator between main rows
+
+        # Print current board status
+        print(f"\nCurrent board: {self.current_board if self.current_board else 'Any'}")
+        print(f"Current player: {self.current_player}") 
