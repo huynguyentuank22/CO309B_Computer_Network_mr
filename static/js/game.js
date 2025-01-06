@@ -1,13 +1,13 @@
 class UltimateTicTacToeGame {
     constructor() {
-        this.currentBoard = null;
-        this.gameStarted = false;  // Start as false
+        this.currentBoard = null;  // Which sub-board to play in (null means any)
+        this.gameStarted = true;  // Game starts immediately
         this.myTurn = false;
-        this.symbol = null;
+        this.symbol = null;  // 'X' or 'O'
         
         this.setupBoard();
         this.startConnectionCheck();
-        this.initializeGame();  // Keep this to initialize the game
+        this.initializeGame();
     }
 
     async initializeGame() {
@@ -31,44 +31,39 @@ class UltimateTicTacToeGame {
         }
     }
 
-    handleGameStatus(status) {
-        if (status.type === 'GAME_START') {
-            console.log('Received game start:', status);
-            this.gameStarted = true;
-            this.myTurn = status.first_player;
-            this.symbol = this.myTurn ? 'X' : 'O';
-            this.updateStatus();
-            this.highlightPlayableBoard();
-        } else if (status.type === 'MOVE') {
-            const cell = document.querySelector(
-                `.cell[data-main-row="${status.main_row}"]` +
-                `[data-main-col="${status.main_col}"]` +
-                `[data-sub-row="${status.sub_row}"]` +
-                `[data-sub-col="${status.sub_col}"]`
-            );
-            
-            if (cell) {
-                cell.textContent = this.symbol === 'X' ? 'O' : 'X';
-                this.myTurn = true;
-                this.updateStatus();
-                this.currentBoard = [status.sub_row, status.sub_col];
-                this.highlightPlayableBoard();
+    setupBoard() {
+        const board = document.getElementById('gameBoard');
+        board.innerHTML = '';
+        
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                const subBoard = document.createElement('div');
+                subBoard.className = 'sub-board';
+                subBoard.dataset.row = i;
+                subBoard.dataset.col = j;
+                
+                for (let m = 0; m < 3; m++) {
+                    for (let n = 0; n < 3; n++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        cell.dataset.mainRow = i;
+                        cell.dataset.mainCol = j;
+                        cell.dataset.subRow = m;
+                        cell.dataset.subCol = n;
+                        cell.addEventListener('click', (e) => this.handleMove(e));
+                        subBoard.appendChild(cell);
+                    }
+                }
+                
+                board.appendChild(subBoard);
             }
         }
     }
 
     async handleMove(event) {
-        if (!this.myTurn || !this.gameStarted) {
-            console.log('Not your turn or game not started');
-            return;
-        }
+        if (!this.myTurn) return;
         
         const cell = event.target;
-        if (cell.textContent) {
-            console.log('Cell already taken');
-            return;
-        }
-        
         const mainRow = parseInt(cell.dataset.mainRow);
         const mainCol = parseInt(cell.dataset.mainCol);
         const subRow = parseInt(cell.dataset.subRow);
@@ -101,7 +96,7 @@ class UltimateTicTacToeGame {
             if (result.game_over) {
                 this.handleGameOver(this.symbol);
             } else {
-                this.currentBoard = [subRow, subCol];
+                this.currentBoard = result.next_board;
                 this.highlightPlayableBoard();
             }
         }
@@ -109,13 +104,7 @@ class UltimateTicTacToeGame {
 
     updateStatus() {
         const status = document.getElementById('status');
-        if (!this.gameStarted) {
-            status.textContent = 'Waiting for game to start...';
-        } else if (this.myTurn) {
-            status.textContent = 'Your turn!';
-        } else {
-            status.textContent = "Opponent's turn";
-        }
+        status.textContent = this.myTurn ? 'Your turn!' : "Opponent's turn";
     }
 
     handleGameOver(winner) {
@@ -142,6 +131,31 @@ class UltimateTicTacToeGame {
                 console.error('Connection check error:', error);
             }
         }, 2000);
+    }
+
+    handleGameStatus(status) {
+        if (status.type === 'MOVE') {
+            const cell = document.querySelector(
+                `.cell[data-main-row="${status.main_row}"]` +
+                `[data-main-col="${status.main_col}"]` +
+                `[data-sub-row="${status.sub_row}"]` +
+                `[data-sub-col="${status.sub_col}"]`
+            );
+            
+            if (cell) {
+                cell.textContent = this.symbol === 'X' ? 'O' : 'X';
+                this.myTurn = true;
+                this.updateStatus();
+                this.currentBoard = [status.sub_row, status.sub_col];
+                this.highlightPlayableBoard();
+            }
+        } else if (status.type === 'GAME_START') {
+            this.gameStarted = true;
+            this.myTurn = status.first_player;
+            this.symbol = this.myTurn ? 'X' : 'O';
+            this.updateStatus();
+            this.highlightPlayableBoard();
+        }
     }
 
     highlightPlayableBoard() {
