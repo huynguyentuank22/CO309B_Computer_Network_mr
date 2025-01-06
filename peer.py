@@ -4,11 +4,13 @@ import time
 import pickle
 from typing import List, Dict
 import logging
+import requests
 
 
 class PeerNetwork:
-    def __init__(self, username: str):
+    def __init__(self, username: str, game):
         self.username = username
+        self.game = game  # Store game instance
         self.local_ip = self.get_local_ip()
         self.UDP_PORT = 5005
         self.udp_socket = None
@@ -24,6 +26,7 @@ class PeerNetwork:
         self.game_status = None  # To store game status messages
         self.ready = False  # My ready status
         self.opponent_ready = False  # Opponent's ready status
+        self.accepted_connection = False
 
     def get_local_ip(self):
         """Get local IP address."""
@@ -295,10 +298,10 @@ class PeerNetwork:
                 'strength': r['strength']
             } for r in filtered_requests]
 
-    def accept_connection(self, username):
+    def accept_connection(self, opponent_username):
         """Accept a connection request from a specific user."""
         for request in self.pending_requests:
-            if request['username'] == username:
+            if request['username'] == opponent_username:
                 try:
                     # Stop broadcasting if we're searching
                     self.stop_broadcasting()
@@ -318,8 +321,8 @@ class PeerNetwork:
                     peer_socket.settimeout(None)
                     self.peer_connection = peer_socket
                     self.is_connected = True
-                    self.opponent_username = username
-                    print(f"Connected to peer {username} at {request['ip']}:{request['tcp_port']}")
+                    self.opponent_username = opponent_username
+                    print(f"Connected to peer {opponent_username} at {request['ip']}:{request['tcp_port']}")
 
                     # Start message handling thread
                     threading.Thread(target=self.handle_peer_messages,
@@ -333,6 +336,8 @@ class PeerNetwork:
                         'type': 'CONNECTION_ACCEPTED',
                         'username': self.username
                     })
+                    
+                    self.accepted_connection = True
                     
                     return True
                 except Exception as e:
@@ -362,47 +367,40 @@ class PeerNetwork:
                     break
                 message = pickle.loads(data)
                 
-                if message.get('type') == 'GAME_ACTION':
-                    print(f"Received game action: {message}")
-                elif message.get('type') == 'CONNECTION_ACCEPTED':
-                    print(f"Connection accepted by {message['username']}")
-                    self.opponent_username = message['username']
-                elif message.get('type') == 'PLAYER_READY':
-                    print(f"Player {message['username']} is ready")
-                    self.opponent_ready = True
-                    print(f"Our ready: {self.ready}, Opponent ready: {self.opponent_ready}")
+                if message.get('type') == 'MOVE':
+                    print(f"Received move: {message}")
+                    # Update game state and get results
+                    result = self.game.receive_move(
+                        message['main_row'],
+                        message['main_col'],
+                        message['sub_row'],
+                        message['sub_col']
+                    )
+                    self.game.print_board()
                     
-                    # If both players are ready, update game status
-                    if self.ready and self.opponent_ready:
-                        print("Both players are ready, updating game status")
-                        self.game_status = {
-                            'type': 'GAME_START',
-                            'both_ready': True
-                        }
-                    else:
-                        self.game_status = {
-                            'type': 'PLAYER_READY',
-                            'username': message['username']
-                        }
-                elif message.get('type') == 'READY_CONFIRM':
-                    print(f"Received ready confirmation from {message['username']}")
+                    # Store the move and results in game_status for the frontend
                     self.game_status = {
-                        'type': 'GAME_START',
-                        'both_ready': True
+                        'type': 'MOVE',
+                        'main_row': message['main_row'],
+                        'main_col': message['main_col'],
+                        'sub_row': message['sub_row'],
+                        'sub_col': message['sub_col'],
+                        'sub_board_result': result.get('sub_board_result'),
+                        'game_over': result.get('game_over'),
+                        'winner': result.get('winner'),
+                        'is_draw': result.get('is_draw')
                     }
                 elif message.get('type') == 'GAME_START':
-                    print(f"Game starting, first player: {message['first_player']}")
+                    print(f"Game starting, first player: {message.get('first_player')}")
                     self.game_status = {
                         'type': 'GAME_START',
-                        'first_player': message['first_player'] == self.username
+                        'first_player': message.get('first_player')
                     }
-                elif message.get('type') == 'FIRE':
-                    print(f"Received fire at {message['x']}, {message['y']}")
                 elif message.get('type') == 'DISCONNECT':
                     self.handle_disconnect(message.get('message', 'Opponent disconnected'))
                     break
                 else:
-                    print(f"Received message: {message}")
+                    print(f"Received unknown message type: {message}")
             except Exception as e:
                 print(f"Message handling error: {e}")
                 self.handle_disconnect("Connection error occurred")

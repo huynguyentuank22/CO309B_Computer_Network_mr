@@ -9,6 +9,7 @@ class UltimateTicTacToe:
         self.game_started = False
         self.winner = None
         self.symbol = None  # 'X' or 'O'
+        self.sub_board_winners = [[None for _ in range(3)] for _ in range(3)]
 
     def create_empty_board(self):
         # Create 3x3 grid of 3x3 boards
@@ -29,47 +30,63 @@ class UltimateTicTacToe:
         # Make the move
         self.board[main_row][main_col][sub_row][sub_col] = self.symbol
         
-        # Check if sub-board is won
-        if self.check_win(self.board[main_row][main_col]):
-            # Mark the main board position as won
-            self.board[main_row][main_col] = [[self.symbol for _ in range(3)] for _ in range(3)]
+        # Check for sub-board win
+        sub_board_result = self.check_sub_board(main_row, main_col)
+        if sub_board_result:
+            # Store the sub-board result
+            self.sub_board_winners[main_row][main_col] = sub_board_result
             
-            # Check if game is won
-            if self.check_game_win():
-                return {
-                    'valid': True,
-                    'game_over': True,
-                    'winner': self.symbol
-                }
-
-        # Set next board based on move position
-        if self.board[sub_row][sub_col][0][0] == '':  # If target board is not full/won
-            self.current_board = (sub_row, sub_col)
+        # Check for main board win using sub-board winners
+        game_result = self.check_win(self.sub_board_winners)
+        
+        # Switch player
+        # self.symbol = 'O' if self.symbol == 'X' else 'X'
+        
+        # Set next valid board
+        if self.sub_board_winners[sub_row][sub_col]:
+            self.current_board = None  # Can play anywhere if target board is won
         else:
-            self.current_board = None  # Can play anywhere
-
-        self.my_turn = False
-        return {'valid': True, 'next_board': self.current_board}
+            self.current_board = (sub_row, sub_col)
+        
+        # Print board for debugging
+        print("\nBoard state after move (make move):")
+        self.print_board()
+        
+        return {
+            'valid': True,
+            'sub_board_result': sub_board_result,
+            'game_over': game_result is not None,
+            'winner': game_result if game_result and game_result != 'draw' else None,
+            'is_draw': game_result == 'draw'
+        }
 
     def check_win(self, board):
-        """Check if a board is won."""
+        """Check if there's a win in the given board."""
         # Check rows
         for row in board:
             if row[0] and row[0] == row[1] == row[2]:
-                return True
-
+                return row[0]
+        
         # Check columns
         for col in range(3):
             if board[0][col] and board[0][col] == board[1][col] == board[2][col]:
-                return True
-
+                return board[0][col]
+        
         # Check diagonals
         if board[0][0] and board[0][0] == board[1][1] == board[2][2]:
-            return True
+            return board[0][0]
         if board[0][2] and board[0][2] == board[1][1] == board[2][0]:
-            return True
+            return board[1][1]
+        
+        # Check for draw (all cells filled)
+        if all(cell for row in board for cell in row):
+            return 'draw'
+        
+        return None
 
-        return False
+    def check_sub_board(self, main_row, main_col):
+        """Check if a sub-board is won."""
+        return self.check_win(self.board[main_row][main_col])
 
     def check_game_win(self):
         """Check if the entire game is won."""
@@ -104,10 +121,51 @@ class UltimateTicTacToe:
         opponent_symbol = 'O' if self.symbol == 'X' else 'X'
         self.board[main_row][main_col][sub_row][sub_col] = opponent_symbol
         
-        # Update current board for next move
-        if self.board[sub_row][sub_col][0][0] == '':  # If target board is not full/won
-            self.current_board = (sub_row, sub_col)
-        else:
-            self.current_board = None  # Can play anywhere
+        # Check for sub-board win
+        sub_board_result = self.check_sub_board(main_row, main_col)
+        if sub_board_result:
+            # Store the sub-board result
+            self.sub_board_winners[main_row][main_col] = sub_board_result
+            
+        # Check for main board win using sub-board winners
+        game_result = self.check_win(self.sub_board_winners)
         
-        self.my_turn = True  # It's our turn after opponent's move 
+        # Update current board for next move
+        if self.sub_board_winners[sub_row][sub_col]:  # If target board is won
+            self.current_board = None  # Can play anywhere
+        else:
+            self.current_board = (sub_row, sub_col)
+        
+        self.my_turn = True  # It's our turn after opponent's move
+
+    
+        return {
+            'sub_board_result': sub_board_result,
+            'game_over': game_result is not None,
+            'winner': game_result if game_result and game_result != 'draw' else None,
+            'is_draw': game_result == 'draw'
+        }
+
+    # can comment
+    def print_board(self):
+        """Print the current state of the ultimate tic-tac-toe board."""
+        # Helper function to get cell content or space if empty
+        def get_cell(main_row, main_col, sub_row, sub_col):
+            return self.board[main_row][main_col][sub_row][sub_col] or ' '
+
+        # Print each row of sub-boards
+        for main_row in range(3):
+            # Print each row within the sub-boards
+            for sub_row in range(3):
+                # Print the three sub-boards in this row
+                for main_col in range(3):
+                    print('|', end=' ')
+                    for sub_col in range(3):
+                        cell = get_cell(main_row, main_col, sub_row, sub_col)
+                        print(f'{cell}', end=' ')
+                    print('|', end=' ')
+                print()  # New line after each sub-board row
+            print('-' * 35)  # Separator between main rows
+
+        # Print current board status
+        print(f"\nCurrent board: {self.current_board if self.current_board else 'Any'}")

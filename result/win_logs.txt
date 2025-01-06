@@ -1,0 +1,301 @@
+Board state after move (make move):
+|       | |       | |       |
+|       | |       | |       |
+|       | |       | |       |
+-----------------------------------
+|       | |       | |       |
+|       | |   X   | |       |
+|       | |       | |       |
+-----------------------------------
+|       | |       | |       |
+|       | |       | |       |
+|       | |       | |       |
+-----------------------------------
+
+Current board: (1, 1)
+Sent: {'type': 'MOVE', 'main_row': 1, 'main_col': 1, 'sub_row': 1, 'sub_col': 1, 'sub_board_result': None, 'game_over': False, 'winner': None, 'is_draw': False}
+Received move: {'type': 'MOVE', 'main_row': 1, 'main_col': 1, 'sub_row': 1, 'sub_col': 2, 'sub_board_result': None, 'game_over': False, 'winner': None, 'is_draw': False}
+|       | |       | |       | 
+|       | |       | |       |
+|       | |       | |       |
+-----------------------------------
+|       | |       | |       |
+|       | |   X O | |       |
+|       | |       | |       |
+-----------------------------------
+|       | |       | |       |
+|       | |       | |       |
+|       | |       | |       |
+-----------------------------------
+
+Current board: (1, 2)
+
+Board state after move (make move):
+|       | |       | |       |
+|       | |       | |       |
+|       | |       | |       |
+-----------------------------------
+|       | |       | |       |
+|       | |   X O | |   X   |
+|       | |       | |       |
+-----------------------------------
+|       | |       | |       |
+|       | |       | |       |
+|       | |       | |       |
+-----------------------------------
+
+Current board: (1, 1)
+Sent: {'type': 'MOVE', 'main_row': 1, 'main_col': 2, 'sub_row': 1, 'sub_col': 1, 'sub_board_result': None, 'game_over': False, 'winner': None, 'is_draw': False}
+Received move: {'type': 'MOVE', 'main_row': 1, 'main_col': 1, 'sub_row': 0, 'sub_col': 2, 'sub_board_result': None, 'game_over': False, 'winner': None, 'is_draw': False}
+|       | |       | |       | 
+|       | |       | |       |
+|       | |       | |       |
+-----------------------------------
+|       | |     O | |       |
+|       | |   X O | |   X   |
+|       | |       | |       |
+-----------------------------------
+|       | |       | |       |
+|       | |       | |       |
+|       | |       | |       |
+-----------------------------------
+
+Current board: (0, 2)
+
+Board state after move (make move):
+|       | |       | |       |
+|       | |       | |   X   |
+|       | |       | |       |
+-----------------------------------
+|       | |     O | |       |
+|       | |   X O | |   X   |
+|       | |       | |       |
+-----------------------------------
+|       | |       | |       |
+|       | |       | |       |
+|       | |       | |       |
+-----------------------------------
+
+Current board: (1, 1)
+Sent: {'type': 'MOVE', 'main_row': 0, 'main_col': 2, 'sub_row': 1, 'sub_col': 1, 'sub_board_result': None, 'game_over': False, 'winner': None, 'is_draw': False}
+Received move: {'type': 'MOVE', 'main_row': 1, 'main_col': 1, 'sub_row': 2, 'sub_col': 2, 'sub_board_result': 'O', 'game_over': False, 'winner': None, 'is_draw': False}
+|       | |       | |       | 
+|       | |       | |   X   |
+|       | |       | |       |
+-----------------------------------
+|       | |     O | |       |
+|       | |   X O | |   X   |
+|       | |     O | |       |
+-----------------------------------
+|       | |       | |       |
+|       | |       | |       |
+|       | |       | |       |
+-----------------------------------
+
+Current board: (2, 2)
+
+Board state after move (make move):
+|       | |       | |       |
+|       | |       | |   X   |
+|       | |       | |       |
+-----------------------------------
+|       | |     O | |       |
+|       | |   X O | |   X   |
+|       | |     O | |       |
+-----------------------------------
+|       | |       | |       |
+|       | |       | |   X   |
+|       | |       | |       |
+-----------------------------------
+
+Current board: Any
+Sent: {'type': 'MOVE', 'main_row': 2, 'main_col': 2, 'sub_row': 1, 'sub_col': 1, 'sub_board_result': None, 'game_over': False, 'winner': None, 'is_draw': False}
+Received move: {'type': 'MOVE', 'main_row': 0, 'main_col': 1, 'sub_row': 1, 'sub_col': 1, 'sub_board_result': None, 'game_over': False, 'winner': None, 'is_draw': False}
+|       | |       | |       | 
+|       | |   O   | |   X   |
+|       | |       | |       |
+-----------------------------------
+|       | |     O | |       |
+|       | |   X O | |   X   |
+|       | |     O | |       |
+-----------------------------------
+|       | |       | |       |
+|       | |       | |   X   |
+|       | |       | |       |
+-----------------------------------
+
+Current board: Any
+
+Board state after move (make move):
+|       | |       | |       |
+|       | |   O   | |   X   |
+|       | |       | |       |
+-----------------------------------
+|       | |     O | |       |
+|       | |   X O | | X X   |
+|       | |     O | |       |
+-----------------------------------
+|       | |       | |       |
+|       | |       | |   X   |
+|       | |       | |       |
+-----------------------------------
+
+Current board: (1, 0)
+Sent: {'type': 'MOVE', 'main_row': 1, 'main_col': 2, 'sub_row': 1, 'sub_col': 0, 'sub_board_result': None, 'game_over': False, 'winner': None, 'is_draw': False}
+Received move: {'type': 'MOVE', 'main_row': 1, 'main_col': 0, 'sub_row': 1, 'sub_col': 1, 'sub_board_result': None, 'game_over': False, 'winner': None, 'is_draw': False}
+|       | |       | |       | 
+|       | |   O   | |   X   |
+|       | |       | |       |
+-----------------------------------
+|       | |     O | |       |
+|   O   | |   X O | | X X   |
+|       | |     O | |       |
+-----------------------------------
+|       | |       | |       |
+|       | |       | |   X   |
+|       | |       | |       |
+-----------------------------------
+
+Current board: Any
+
+Board state after move (make move):
+|       | |       | |       |
+|       | |   O   | |   X   |
+|       | |       | |       |
+-----------------------------------
+|       | |     O | |       |
+|   O   | |   X O | | X X X |
+|       | |     O | |       |
+-----------------------------------
+|       | |       | |       |
+|       | |       | |   X   |
+|       | |       | |       |
+-----------------------------------
+
+Current board: Any
+Sent: {'type': 'MOVE', 'main_row': 1, 'main_col': 2, 'sub_row': 1, 'sub_col': 2, 'sub_board_result': 'X', 'game_over': False, 'winner': None, 'is_draw': False}
+Received move: {'type': 'MOVE', 'main_row': 0, 'main_col': 1, 'sub_row': 0, 'sub_col': 2, 'sub_board_result': None, 'game_over': False, 'winner': None, 'is_draw': False}
+|       | |     O | |       | 
+|       | |   O   | |   X   |
+|       | |       | |       |
+-----------------------------------
+|       | |     O | |       |
+|   O   | |   X O | | X X X |
+|       | |     O | |       |
+-----------------------------------
+|       | |       | |       |
+|       | |       | |   X   |
+|       | |       | |       |
+-----------------------------------
+
+Current board: (0, 2)
+
+Board state after move (make move):
+|       | |     O | |   X   |
+|       | |   O   | |   X   |
+|       | |       | |       |
+-----------------------------------
+|       | |     O | |       |
+|   O   | |   X O | | X X X |
+|       | |     O | |       |
+-----------------------------------
+|       | |       | |       |
+|       | |       | |   X   |
+|       | |       | |       |
+-----------------------------------
+
+Current board: (0, 1)
+Sent: {'type': 'MOVE', 'main_row': 0, 'main_col': 2, 'sub_row': 0, 'sub_col': 1, 'sub_board_result': None, 'game_over': False, 'winner': None, 'is_draw': False}
+Received move: {'type': 'MOVE', 'main_row': 0, 'main_col': 1, 'sub_row': 2, 'sub_col': 2, 'sub_board_result': None, 'game_over': False, 'winner': None, 'is_draw': False}
+|       | |     O | |   X   | 
+|       | |   O   | |   X   |
+|       | |     O | |       |
+-----------------------------------
+|       | |     O | |       |
+|   O   | |   X O | | X X X |
+|       | |     O | |       |
+-----------------------------------
+|       | |       | |       |
+|       | |       | |   X   |
+|       | |       | |       |
+-----------------------------------
+
+Current board: (2, 2)
+
+Board state after move (make move):
+|       | |     O | |   X   |
+|       | |   O   | |   X   |
+|       | |     O | |       |
+-----------------------------------
+|       | |     O | |       |
+|   O   | |   X O | | X X X |
+|       | |     O | |       |
+-----------------------------------
+|       | |       | |       |
+|       | |       | |   X   |
+|       | |       | |   X   |
+-----------------------------------
+
+Current board: (2, 1)
+Sent: {'type': 'MOVE', 'main_row': 2, 'main_col': 2, 'sub_row': 2, 'sub_col': 1, 'sub_board_result': None, 'game_over': False, 'winner': None, 'is_draw': False}
+Received move: {'type': 'MOVE', 'main_row': 2, 'main_col': 1, 'sub_row': 0, 'sub_col': 2, 'sub_board_result': None, 'game_over': False, 'winner': None, 'is_draw': False}
+|       | |     O | |   X   | 
+|       | |   O   | |   X   |
+|       | |     O | |       |
+-----------------------------------
+|       | |     O | |       |
+|   O   | |   X O | | X X X |
+|       | |     O | |       |
+-----------------------------------
+|       | |     O | |       |
+|       | |       | |   X   |
+|       | |       | |   X   |
+-----------------------------------
+
+Current board: (0, 2)
+
+Board state after move (make move):
+|       | |     O | |   X   |
+|       | |   O   | |   X   |
+|       | |     O | |   X   |
+-----------------------------------
+|       | |     O | |       |
+|   O   | |   X O | | X X X |
+|       | |     O | |       |
+-----------------------------------
+|       | |     O | |       |
+|       | |       | |   X   |
+|       | |       | |   X   |
+-----------------------------------
+
+Current board: (2, 1)
+Sent: {'type': 'MOVE', 'main_row': 0, 'main_col': 2, 'sub_row': 2, 'sub_col': 1, 'sub_board_result': 'X', 'game_over': False, 'winner': None, 'is_draw': False}
+Received move: {'type': 'MOVE', 'main_row': 2, 'main_col': 1, 'sub_row': 2, 'sub_col': 2, 'sub_board_result': None, 'game_over': False, 'winner': None, 'is_draw': False}
+|       | |     O | |   X   | 
+|       | |   O   | |   X   |
+|       | |     O | |   X   |
+-----------------------------------
+|       | |     O | |       |
+|   O   | |   X O | | X X X |
+|       | |     O | |       |
+-----------------------------------
+|       | |     O | |       |
+|       | |       | |   X   |
+|       | |     O | |   X   |
+-----------------------------------
+
+Current board: (2, 2)
+
+Board state after move (make move):
+|       | |     O | |   X   |
+|       | |   O   | |   X   |
+|       | |     O | |   X   |
+-----------------------------------
+|       | |     O | |       |
+|   O   | |   X O | | X X X |
+|       | |     O | |       |
+-----------------------------------
+|       | |     O | |   X   |
+|       | |       | |   X   |
+|       | |     O | |   X   |
+-----------------------------------

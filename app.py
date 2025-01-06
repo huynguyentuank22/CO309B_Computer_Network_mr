@@ -24,9 +24,12 @@ def create_game():
     
     # Store username in session
     session['username'] = username
+
+    # Create game instance
+    game = UltimateTicTacToe(username)
     
     # Create peer network instance
-    peer = PeerNetwork(username)
+    peer = PeerNetwork(username, game)
     peer.initialize_udp_socket()
     peer.initialize_tcp_socket()
     
@@ -34,8 +37,6 @@ def create_game():
     udp_listener_thread = threading.Thread(target=peer.listen_for_udp, daemon=True)
     udp_listener_thread.start()
     
-    # Create game instance
-    game = UltimateTicTacToe(username)
     
     # Store instances
     game_instances[username] = game
@@ -48,45 +49,6 @@ def game():
     if 'username' not in session:
         return redirect(url_for('index'))
     return render_template('game.html')
-
-@app.route('/place_ship', methods=['POST'])
-def place_ship():
-    data = request.json
-    username = session.get('username')
-    game = game_instances.get(username)
-    
-    if not game:
-        return jsonify({'error': 'Game not found'}), 404
-    
-    success = game.place_ship(
-        data['ship'],
-        data['x'],
-        data['y'],
-        data['orientation']
-    )
-    
-    return jsonify({'success': success})
-
-@app.route('/fire', methods=['POST'])
-def fire():
-    data = request.json
-    username = session.get('username')
-    game = game_instances.get(username)
-    
-    if not game:
-        return jsonify({'error': 'Game not found'}), 404
-    
-    result = game.fire(data['x'], data['y'])
-    # Send the move to peer
-    peer = peer_instances.get(username)
-    if peer and peer.is_connected:
-        peer.send_message({
-            'type': 'FIRE',
-            'x': data['x'],
-            'y': data['y']
-        })
-    
-    return jsonify(result)
 
 @app.route('/lobby')
 def lobby():
@@ -140,15 +102,14 @@ def handle_request():
             my_game = game_instances.get(username)
             
             if opponent_game and my_game:
-                # Set up both games
-                is_first = random.choice([True, False])
-                my_game.start_game(is_first)
+                # Accepting player goes first
+                my_game.start_game(True)  # Accepting player is first
                 
-                # Notify opponent through peer connection
+                # Notify opponent (broadcasting player) they go second
                 peer.send_message({
                     'type': 'GAME_START',
-                    'first_player': not is_first,  # Opposite for opponent
-                    'opponent': username  # Send accepting player's username
+                    'first_player': False,  # Broadcasting player goes second
+                    'opponent': username
                 })
             
             return jsonify({'success': True})
@@ -161,17 +122,18 @@ def handle_request():
 def check_connection():
     username = session.get('username')
     peer = peer_instances.get(username)
+    game = game_instances.get(username)
     
     if not peer:
         return jsonify({'connected': False, 'status': 'No peer connection'})
     
     if peer.is_connected:
-        # If connected and has game status, return it
         game_status = peer.get_game_status()
         return jsonify({
             'connected': True,
             'game_status': game_status,
-            'opponent': peer.opponent_username
+            'opponent': peer.opponent_username,
+            'my_turn': game.my_turn if game else False
         })
     
     return jsonify({'connected': False, 'status': 'Waiting for connection'})
@@ -234,18 +196,6 @@ def player_ready():
         'both_ready': both_ready
     })
 
-@app.route('/receive_attack', methods=['POST'])
-def receive_attack():
-    data = request.json
-    username = session.get('username')
-    game = game_instances.get(username)
-    
-    if not game:
-        return jsonify({'error': 'Game not found'}), 404
-    
-    result = game.receive_attack(data['x'], data['y'])
-    return jsonify(result)
-
 @app.route('/start_game', methods=['POST'])
 def start_game():
     username = session.get('username')
@@ -255,8 +205,8 @@ def start_game():
     if not game or not peer:
         return jsonify({'success': False}), 404
         
-    # Randomly choose who goes first
-    is_first = random.choice([True, False])
+    # The player who accepted the connection goes first
+    is_first = peer.accepted_connection
     game.start_game(is_first)
     
     # Notify opponent
@@ -281,6 +231,9 @@ def make_move():
     if not game:
         return jsonify({'valid': False, 'message': 'Game not found'}), 404
     
+    if not game.my_turn:
+        return jsonify({'valid': False, 'message': 'Not your turn'})
+    
     result = game.make_move(
         data['main_row'],
         data['main_col'],
@@ -288,15 +241,21 @@ def make_move():
         data['sub_col']
     )
     
-    # Send move to opponent if valid
+    # Send move and results to opponent if valid
     if result['valid'] and peer and peer.is_connected:
         peer.send_message({
             'type': 'MOVE',
             'main_row': data['main_row'],
             'main_col': data['main_col'],
             'sub_row': data['sub_row'],
-            'sub_col': data['sub_col']
+            'sub_col': data['sub_col'],
+            'sub_board_result': result.get('sub_board_result'),
+            'game_over': result.get('game_over'),
+            'winner': result.get('winner'),
+            'is_draw': result.get('is_draw')
         })
+        # Update turn
+        game.my_turn = False
     
     return jsonify(result)
 
@@ -339,7 +298,14 @@ def receive_move():
         data['sub_col']
     )
     
-    return jsonify({'success': True})
+    # Update game status for the receiving player
+    game.my_turn = True  # It's now this player's turn
+    
+    return jsonify({
+        'success': True,
+        'valid': True,
+        'next_board': [data['sub_row'], data['sub_col']]
+    })
 
 if __name__ == '__main__':
     app.run(debug=True) 

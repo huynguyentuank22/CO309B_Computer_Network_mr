@@ -61,9 +61,11 @@ class UltimateTicTacToeGame {
     }
 
     async handleMove(event) {
-        if (!this.myTurn) return;
+        if (!this.myTurn || !this.gameStarted) return;
         
         const cell = event.target;
+        if (cell.textContent) return; // Cell already taken
+        
         const mainRow = parseInt(cell.dataset.mainRow);
         const mainCol = parseInt(cell.dataset.mainCol);
         const subRow = parseInt(cell.dataset.subRow);
@@ -93,23 +95,57 @@ class UltimateTicTacToeGame {
             this.myTurn = false;
             this.updateStatus();
             
-            if (result.game_over) {
-                this.handleGameOver(this.symbol);
-            } else {
-                this.currentBoard = result.next_board;
-                this.highlightPlayableBoard();
+            // Handle sub-board result
+            if (result.sub_board_result) {
+                this.handleSubBoardResult(
+                    mainRow,
+                    mainCol,
+                    result.sub_board_result
+                );
             }
+            
+            // Handle game over
+            if (result.game_over) {
+                if (result.is_draw) {
+                    this.handleGameOver('draw');
+                } else {
+                    this.handleGameOver(result.winner);
+                }
+                return;
+            }
+            
+            // Update current board based on target board state
+            const targetSubBoard = document.querySelector(
+                `.sub-board[data-row="${subRow}"][data-col="${subCol}"]`
+            );
+            if (targetSubBoard.classList.contains('won')) {
+                this.currentBoard = null;  // Can play anywhere
+            } else {
+                this.currentBoard = [subRow, subCol];
+            }
+            
+            this.highlightPlayableBoard();
         }
     }
 
     updateStatus() {
         const status = document.getElementById('status');
-        status.textContent = this.myTurn ? 'Your turn!' : "Opponent's turn";
+        if (this.myTurn) {
+            status.textContent = `Your turn! (${this.symbol})`;
+        } else {
+            status.textContent = `Opponent's turn (${this.symbol === 'X' ? 'O' : 'X'})`;
+        }
     }
 
-    handleGameOver(winner) {
+    handleGameOver(result) {
         const status = document.getElementById('status');
-        status.textContent = winner === this.symbol ? 'You won!' : 'You lost!';
+        if (result === 'draw') {
+            status.textContent = "Game Over - It's a draw!";
+        } else {
+            status.textContent = result === this.symbol ? 'You won!' : 'You lost!';
+        }
+        
+        // Disable all cells
         document.querySelectorAll('.cell').forEach(cell => {
             cell.style.pointerEvents = 'none';
         });
@@ -147,8 +183,62 @@ class UltimateTicTacToeGame {
                 this.myTurn = true;
                 this.updateStatus();
                 
-                this.currentBoard = [status.sub_row, status.sub_col];
+                // Handle sub-board result
+                if (status.sub_board_result) {
+                    this.handleSubBoardResult(
+                        status.main_row,
+                        status.main_col,
+                        status.sub_board_result
+                    );
+                }
+                
+                // Handle game over
+                if (status.game_over) {
+                    if (status.is_draw) {
+                        this.handleGameOver('draw');
+                    } else {
+                        this.handleGameOver(status.winner);
+                    }
+                    return;
+                }
+                
+                // Update current board based on target board state
+                const targetSubBoard = document.querySelector(
+                    `.sub-board[data-row="${status.sub_row}"][data-col="${status.sub_col}"]`
+                );
+                if (targetSubBoard.classList.contains('won')) {
+                    this.currentBoard = null;  // Can play anywhere
+                } else {
+                    this.currentBoard = [status.sub_row, status.sub_col];
+                }
+                
                 this.highlightPlayableBoard();
+            }
+        } else if (status.type === 'GAME_START') {
+            this.gameStarted = true;
+            this.myTurn = status.first_player;
+            this.symbol = this.myTurn ? 'X' : 'O';
+            this.updateStatus();
+            this.highlightPlayableBoard();
+        }
+    }
+
+    handleSubBoardResult(mainRow, mainCol, result) {
+        const subBoard = document.querySelector(
+            `.sub-board[data-row="${mainRow}"][data-col="${mainCol}"]`
+        );
+        
+        if (subBoard) {
+            // Clear all cells in the sub-board
+            subBoard.innerHTML = '';
+            subBoard.classList.add('won');
+            
+            if (result === 'draw') {
+                subBoard.classList.add('draw');
+                subBoard.textContent = '-';
+            } else {
+                subBoard.classList.add(`won-${result.toLowerCase()}`);
+                subBoard.textContent = result;  // 'X' or 'O'
             }
         }
     }
