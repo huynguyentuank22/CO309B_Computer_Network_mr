@@ -140,13 +140,13 @@ def handle_request():
             my_game = game_instances.get(username)
             
             if opponent_game and my_game:
-                # Accepting player goes first
+                # Accepting player goes first (X)
                 my_game.start_game(True)  # Accepting player is first
                 
                 # Send game start to broadcasting player (they go second)
                 peer.send_message({
                     'type': 'GAME_START',
-                    'first_player': False,  # Broadcasting player goes second
+                    'first_player': False,  # Broadcasting player goes second (O)
                     'opponent': username
                 })
             
@@ -247,11 +247,14 @@ def receive_attack():
 def start_game():
     username = session.get('username')
     game = game_instances.get(username)
+    peer = peer_instances.get(username)
     
-    if not game:
+    if not game or not peer:
         return jsonify({'success': False}), 404
         
-    # Don't initialize game here - it's done in handle_request
+    # Initialize game state
+    game.gameStarted = True
+    
     return jsonify({
         'success': True,
         'first_player': game.my_turn  # Return the current turn state

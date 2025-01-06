@@ -1,12 +1,34 @@
 class UltimateTicTacToeGame {
     constructor() {
         this.currentBoard = null;
-        this.gameStarted = false;  // Changed to false initially
+        this.gameStarted = false;  // Start as false
         this.myTurn = false;
         this.symbol = null;
         
         this.setupBoard();
         this.startConnectionCheck();
+        this.initializeGame();  // Keep this to initialize the game
+    }
+
+    async initializeGame() {
+        try {
+            const response = await fetch('/start_game', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                this.myTurn = result.first_player;
+                this.symbol = this.myTurn ? 'X' : 'O';
+                this.updateStatus();
+                this.highlightPlayableBoard();
+            }
+        } catch (error) {
+            console.error('Error starting game:', error);
+        }
     }
 
     handleGameStatus(status) {
