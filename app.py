@@ -24,6 +24,9 @@ def create_game():
     
     # Store username in session
     session['username'] = username
+
+    # Create game instance
+    game = UltimateTicTacToe(username)
     
     # Create peer network instance
     peer = PeerNetwork(username, game)
@@ -34,8 +37,6 @@ def create_game():
     udp_listener_thread = threading.Thread(target=peer.listen_for_udp, daemon=True)
     udp_listener_thread.start()
     
-    # Create game instance
-    game = UltimateTicTacToe(username)
     
     # Store instances
     game_instances[username] = game

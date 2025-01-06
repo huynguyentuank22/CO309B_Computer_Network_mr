@@ -106,7 +106,11 @@ class UltimateTicTacToeGame {
 
     updateStatus() {
         const status = document.getElementById('status');
-        status.textContent = this.myTurn ? 'Your turn!' : "Opponent's turn";
+        if (this.myTurn) {
+            status.textContent = `Your turn! (${this.symbol})`;
+        } else {
+            status.textContent = `Opponent's turn (${this.symbol === 'X' ? 'O' : 'X'})`;
+        }
     }
 
     handleGameOver(winner) {
