@@ -143,12 +143,12 @@ def handle_request():
                 # Set up both games
                 is_first = random.choice([True, False])
                 my_game.start_game(is_first)
-                opponent_game.start_game(not is_first)
                 
                 # Notify opponent through peer connection
                 peer.send_message({
                     'type': 'GAME_START',
-                    'first_player': not is_first  # Opposite for opponent
+                    'first_player': not is_first,  # Opposite for opponent
+                    'opponent': username  # Send accepting player's username
                 })
             
             return jsonify({'success': True})
@@ -157,43 +157,24 @@ def handle_request():
         return jsonify({'success': True})
     return jsonify({'success': False})
 
-@app.route('/check_connection')
+@app.route('/check_connection', methods=['GET'])
 def check_connection():
     username = session.get('username')
     peer = peer_instances.get(username)
-    game = game_instances.get(username)
     
-    if peer and peer.is_connected:
-        game_status = None
-        if game:
-            # Check opponent's ready status
-            opponent_game = game_instances.get(peer.opponent_username)
-            if opponent_game and opponent_game.ready and not game.opponent_ready:
-                game.opponent_ready = True
-                game_status = {
-                    'type': 'PLAYER_READY',
-                    'username': peer.opponent_username
-                }
-            
-            # If both players are ready, start the game
-            if game.ready and game.opponent_ready and not game.game_started:
-                game_status = {
-                    'type': 'GAME_START',
-                    'first_player': game.my_turn
-                }
-                
+    if not peer:
+        return jsonify({'connected': False, 'status': 'No peer connection'})
+    
+    if peer.is_connected:
+        # If connected and has game status, return it
+        game_status = peer.get_game_status()
         return jsonify({
             'connected': True,
-            'opponent': getattr(peer, 'opponent_username', None),
-            'game_status': game_status
+            'game_status': game_status,
+            'opponent': peer.opponent_username
         })
     
-    # Get disconnect reason if any
-    status = peer.get_game_status() if peer else None
-    return jsonify({
-        'connected': False,
-        'status': status
-    })
+    return jsonify({'connected': False, 'status': 'Waiting for connection'})
 
 @app.route('/disconnect', methods=['POST'])
 def disconnect():

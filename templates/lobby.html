@@ -114,6 +114,8 @@
     </div>
 
     <script>
+        let checkConnectionInterval;
+
         document.addEventListener('DOMContentLoaded', () => {
             // Display username
             fetch('/get_username')
@@ -125,7 +127,29 @@
             // Start checking for available players
             updatePlayersList();
             setInterval(updatePlayersList, 2000);
+            
+            // Start connection check for game redirect
+            startConnectionCheck();
         });
+
+        function startConnectionCheck() {
+            checkConnectionInterval = setInterval(async () => {
+                try {
+                    const response = await fetch('/check_connection');
+                    const data = await response.json();
+                    
+                    if (data.connected && data.game_status) {
+                        if (data.game_status.type === 'GAME_START') {
+                            // Clear interval and redirect to game
+                            clearInterval(checkConnectionInterval);
+                            window.location.href = '/game';
+                        }
+                    }
+                } catch (error) {
+                    console.error('Connection check error:', error);
+                }
+            }, 1000);
+        }
 
         function findMatch() {
             document.getElementById('findMatch').style.display = 'none';
@@ -192,9 +216,8 @@
         }
 
         function logout() {
-            fetch('/disconnect', {
-                method: 'POST'
-            }).then(() => {
+            clearInterval(checkConnectionInterval);
+            fetch('/logout').then(() => {
                 window.location.href = '/';
             });
         }
