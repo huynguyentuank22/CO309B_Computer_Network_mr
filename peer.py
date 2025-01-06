@@ -4,6 +4,7 @@ import time
 import pickle
 from typing import List, Dict
 import logging
+import requests
 
 
 class PeerNetwork:
@@ -362,47 +363,26 @@ class PeerNetwork:
                     break
                 message = pickle.loads(data)
                 
-                if message.get('type') == 'GAME_ACTION':
-                    print(f"Received game action: {message}")
-                elif message.get('type') == 'CONNECTION_ACCEPTED':
-                    print(f"Connection accepted by {message['username']}")
-                    self.opponent_username = message['username']
-                elif message.get('type') == 'PLAYER_READY':
-                    print(f"Player {message['username']} is ready")
-                    self.opponent_ready = True
-                    print(f"Our ready: {self.ready}, Opponent ready: {self.opponent_ready}")
-                    
-                    # If both players are ready, update game status
-                    if self.ready and self.opponent_ready:
-                        print("Both players are ready, updating game status")
-                        self.game_status = {
-                            'type': 'GAME_START',
-                            'both_ready': True
-                        }
-                    else:
-                        self.game_status = {
-                            'type': 'PLAYER_READY',
-                            'username': message['username']
-                        }
-                elif message.get('type') == 'READY_CONFIRM':
-                    print(f"Received ready confirmation from {message['username']}")
-                    self.game_status = {
-                        'type': 'GAME_START',
-                        'both_ready': True
-                    }
+                if message.get('type') == 'MOVE':
+                    print(f"Received move: {message}")
+                    # Update game state through Flask route
+                    requests.post('http://localhost:5000/receive_move', json={
+                        'main_row': message['main_row'],
+                        'main_col': message['main_col'],
+                        'sub_row': message['sub_row'],
+                        'sub_col': message['sub_col']
+                    })
                 elif message.get('type') == 'GAME_START':
-                    print(f"Game starting, first player: {message['first_player']}")
+                    print(f"Game starting, first player: {message.get('first_player')}")
                     self.game_status = {
                         'type': 'GAME_START',
-                        'first_player': message['first_player'] == self.username
+                        'first_player': message.get('first_player')
                     }
-                elif message.get('type') == 'FIRE':
-                    print(f"Received fire at {message['x']}, {message['y']}")
                 elif message.get('type') == 'DISCONNECT':
                     self.handle_disconnect(message.get('message', 'Opponent disconnected'))
                     break
                 else:
-                    print(f"Received message: {message}")
+                    print(f"Received unknown message type: {message}")
             except Exception as e:
                 print(f"Message handling error: {e}")
                 self.handle_disconnect("Connection error occurred")
