@@ -40,7 +40,7 @@ class UltimateTicTacToe:
         game_result = self.check_win(self.sub_board_winners)
         
         # Switch player
-        self.symbol = 'O' if self.symbol == 'X' else 'X'
+        # self.symbol = 'O' if self.symbol == 'X' else 'X'
         
         # Set next valid board
         if self.sub_board_winners[sub_row][sub_col]:
@@ -49,7 +49,7 @@ class UltimateTicTacToe:
             self.current_board = (sub_row, sub_col)
         
         # Print board for debugging
-        print("\nBoard state after move:")
+        print("\nBoard state after move (make move):")
         self.print_board()
         
         return {

@@ -257,10 +257,6 @@ def make_move():
         # Update turn
         game.my_turn = False
     
-    # Add this for debugging
-    print("\nBoard state after move:")
-    game.print_board()
-    
     return jsonify(result)
 
 @app.route('/get_username')
