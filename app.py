@@ -133,7 +133,25 @@ def handle_request():
     
     if peer and data.get('accept'):
         success = peer.accept_connection(data['username'])
-        return jsonify({'success': success})
+        if success:
+            # Get opponent's game instance
+            opponent_username = data['username']
+            opponent_game = game_instances.get(opponent_username)
+            my_game = game_instances.get(username)
+            
+            if opponent_game and my_game:
+                # Set up both games
+                is_first = random.choice([True, False])
+                my_game.start_game(is_first)
+                opponent_game.start_game(not is_first)
+                
+                # Notify opponent through peer connection
+                peer.send_message({
+                    'type': 'GAME_START',
+                    'first_player': not is_first  # Opposite for opponent
+                })
+            
+            return jsonify({'success': True})
     elif peer:
         peer.reject_connection(data['username'])
         return jsonify({'success': True})
@@ -275,6 +293,7 @@ def make_move():
     data = request.json
     username = session.get('username')
     game = game_instances.get(username)
+    peer = peer_instances.get(username)
     
     if not game:
         return jsonify({'valid': False, 'message': 'Game not found'}), 404
@@ -287,16 +306,14 @@ def make_move():
     )
     
     # Send move to opponent if valid
-    if result['valid']:
-        peer = peer_instances.get(username)
-        if peer and peer.is_connected:
-            peer.send_message({
-                'type': 'MOVE',
-                'main_row': data['main_row'],
-                'main_col': data['main_col'],
-                'sub_row': data['sub_row'],
-                'sub_col': data['sub_col']
-            })
+    if result['valid'] and peer and peer.is_connected:
+        peer.send_message({
+            'type': 'MOVE',
+            'main_row': data['main_row'],
+            'main_col': data['main_col'],
+            'sub_row': data['sub_row'],
+            'sub_col': data['sub_col']
+        })
     
     return jsonify(result)
 
@@ -321,6 +338,25 @@ def logout():
             del peer_instances[username]
     session.clear()
     return redirect(url_for('index'))
+
+@app.route('/receive_move', methods=['POST'])
+def receive_move():
+    data = request.json
+    username = session.get('username')
+    game = game_instances.get(username)
+    
+    if not game:
+        return jsonify({'success': False, 'message': 'Game not found'}), 404
+    
+    # Update the game state with opponent's move
+    game.receive_move(
+        data['main_row'],
+        data['main_col'],
+        data['sub_row'],
+        data['sub_col']
+    )
+    
+    return jsonify({'success': True})
 
 if __name__ == '__main__':
     app.run(debug=True) 

@@ -98,3 +98,16 @@ class UltimateTicTacToe:
         self.game_started = True
         self.my_turn = is_first
         self.symbol = 'X' if is_first else 'O' 
+
+    def receive_move(self, main_row, main_col, sub_row, sub_col):
+        """Handle opponent's move."""
+        opponent_symbol = 'O' if self.symbol == 'X' else 'X'
+        self.board[main_row][main_col][sub_row][sub_col] = opponent_symbol
+        
+        # Update current board for next move
+        if self.board[sub_row][sub_col][0][0] == '':  # If target board is not full/won
+            self.current_board = (sub_row, sub_col)
+        else:
+            self.current_board = None  # Can play anywhere
+        
+        self.my_turn = True  # It's our turn after opponent's move 

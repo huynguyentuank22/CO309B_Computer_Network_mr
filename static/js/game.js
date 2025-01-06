@@ -225,6 +225,25 @@ class UltimateTicTacToeGame {
             this.symbol = this.myTurn ? 'X' : 'O';
             this.updateStatus();
             this.highlightPlayableBoard();
+        } else if (status.type === 'MOVE') {
+            // Handle opponent's move
+            const cell = document.querySelector(
+                `.cell[data-main-row="${status.main_row}"]` +
+                `[data-main-col="${status.main_col}"]` +
+                `[data-sub-row="${status.sub_row}"]` +
+                `[data-sub-col="${status.sub_col}"]`
+            );
+            
+            if (cell) {
+                cell.textContent = this.symbol === 'X' ? 'O' : 'X';
+                this.myTurn = true;
+                this.updateStatus();
+                
+                // Update current board based on opponent's move
+                this.currentBoard = this.board[status.sub_row][status.sub_col][0][0] === '' ?
+                    [status.sub_row, status.sub_col] : null;
+                this.highlightPlayableBoard();
+            }
         }
     }
 }
