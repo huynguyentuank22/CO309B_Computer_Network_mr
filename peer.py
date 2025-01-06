@@ -8,8 +8,9 @@ import requests
 
 
 class PeerNetwork:
-    def __init__(self, username: str):
+    def __init__(self, username: str, game):
         self.username = username
+        self.game = game  # Store game instance
         self.local_ip = self.get_local_ip()
         self.UDP_PORT = 5005
         self.udp_socket = None
@@ -368,6 +369,13 @@ class PeerNetwork:
                 
                 if message.get('type') == 'MOVE':
                     print(f"Received move: {message}")
+                    # Update game state directly
+                    self.game.receive_move(
+                        message['main_row'],
+                        message['main_col'],
+                        message['sub_row'],
+                        message['sub_col']
+                    )
                     # Store the move in game_status for the frontend to handle
                     self.game_status = {
                         'type': 'MOVE',

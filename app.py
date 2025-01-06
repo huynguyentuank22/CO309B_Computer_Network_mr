@@ -26,7 +26,7 @@ def create_game():
     session['username'] = username
     
     # Create peer network instance
-    peer = PeerNetwork(username)
+    peer = PeerNetwork(username, game)
     peer.initialize_udp_socket()
     peer.initialize_tcp_socket()
     
@@ -48,45 +48,6 @@ def game():
     if 'username' not in session:
         return redirect(url_for('index'))
     return render_template('game.html')
-
-@app.route('/place_ship', methods=['POST'])
-def place_ship():
-    data = request.json
-    username = session.get('username')
-    game = game_instances.get(username)
-    
-    if not game:
-        return jsonify({'error': 'Game not found'}), 404
-    
-    success = game.place_ship(
-        data['ship'],
-        data['x'],
-        data['y'],
-        data['orientation']
-    )
-    
-    return jsonify({'success': success})
-
-@app.route('/fire', methods=['POST'])
-def fire():
-    data = request.json
-    username = session.get('username')
-    game = game_instances.get(username)
-    
-    if not game:
-        return jsonify({'error': 'Game not found'}), 404
-    
-    result = game.fire(data['x'], data['y'])
-    # Send the move to peer
-    peer = peer_instances.get(username)
-    if peer and peer.is_connected:
-        peer.send_message({
-            'type': 'FIRE',
-            'x': data['x'],
-            'y': data['y']
-        })
-    
-    return jsonify(result)
 
 @app.route('/lobby')
 def lobby():
@@ -233,18 +194,6 @@ def player_ready():
         'success': True,
         'both_ready': both_ready
     })
-
-@app.route('/receive_attack', methods=['POST'])
-def receive_attack():
-    data = request.json
-    username = session.get('username')
-    game = game_instances.get(username)
-    
-    if not game:
-        return jsonify({'error': 'Game not found'}), 404
-    
-    result = game.receive_attack(data['x'], data['y'])
-    return jsonify(result)
 
 @app.route('/start_game', methods=['POST'])
 def start_game():
